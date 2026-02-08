@@ -31,4 +31,8 @@ export type {
   NotificationService,
   StorageService,
   CacheService,
+  EmailDraftsService,
+  EmailDraft,
+  AnalyzedPostsStorage,
+  AnalyzedPostData,
 } from './services.js';

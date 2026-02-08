@@ -11,6 +11,26 @@ export type {
   NodeApprovalConfig,
   NodeNotificationConfig,
   BaseNodeConfig,
+  // Service types
+  NodeServices,
+  ApolloClient,
+  ApolloContact,
+  DataForSeoClient,
+  DataForSeoAuditResult,
+  DataForSeoKeyword,
+  TwitterClient,
+  TwitterPost,
+  ForumScoutClient,
+  LinkedInPost,
+  OpenAIClient,
+  AnthropicClient,
+  NotificationService,
+  StorageService,
+  CacheService,
+  EmailDraftsService,
+  EmailDraft,
+  AnalyzedPostsStorage,
+  AnalyzedPostData,
 } from './types/index.js';
 
 // Execution context
