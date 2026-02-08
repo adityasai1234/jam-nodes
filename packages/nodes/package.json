@@ -1,0 +1,59 @@
+{
+  "name": "@jam-nodes/nodes",
+  "version": "0.1.0",
+  "description": "Built-in workflow nodes for jam-nodes framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./logic": {
+      "types": "./dist/logic/index.d.ts",
+      "import": "./dist/logic/index.js"
+    },
+    "./transform": {
+      "types": "./dist/transform/index.d.ts",
+      "import": "./dist/transform/index.js"
+    },
+    "./examples": {
+      "types": "./dist/examples/index.d.ts",
+      "import": "./dist/examples/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@jam-nodes/core": "^0.1.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "zod": "^3.24.0"
+  },
+  "keywords": [
+    "workflow",
+    "nodes",
+    "conditional",
+    "automation"
+  ],
+  "author": "Jam",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wespreadjam/jam-nodes.git",
+    "directory": "packages/nodes"
+  }
+}

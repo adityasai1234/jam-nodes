@@ -1,0 +1,52 @@
+{
+  "name": "@jam-nodes/core",
+  "version": "0.1.0",
+  "description": "Core framework for building workflow nodes with type-safe executors and Zod validation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
+  "dependencies": {
+    "jsonpath-plus": "^10.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "zod": "^3.24.0"
+  },
+  "keywords": [
+    "workflow",
+    "nodes",
+    "executor",
+    "zod",
+    "typescript"
+  ],
+  "author": "Jam",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wespreadjam/jam-nodes.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/wespreadjam/jam-nodes/issues"
+  },
+  "homepage": "https://github.com/wespreadjam/jam-nodes/tree/main/packages/core#readme"
+}

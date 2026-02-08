@@ -1,0 +1,36 @@
+{
+  "name": "jam-nodes-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Extensible workflow node framework for building automation pipelines",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wespreadjam/jam-nodes.git"
+  },
+  "keywords": [
+    "workflow",
+    "nodes",
+    "automation",
+    "pipeline",
+    "zod"
+  ],
+  "author": "Jam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wespreadjam/jam-nodes/issues"
+  },
+  "homepage": "https://github.com/wespreadjam/jam-nodes#readme",
+  "engines": {
+    "node": ">=18"
+  }
+}
