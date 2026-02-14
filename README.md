@@ -1,3 +1,5 @@
+hi this is jia and mohammad - we also have another repo with 663 commits which we will continue to open source in the coming days as we clean it up to be nice to use
+
 # jam-nodes
 
 Extensible workflow node framework for building automation pipelines. Define, register, and execute typed nodes with Zod validation.
