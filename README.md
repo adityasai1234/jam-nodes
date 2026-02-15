@@ -1,4 +1,4 @@
-hi this is jia and mohammad - we also have another repo with 663 commits which we will continue to open source parts of in the coming days as we clean it up to be nice to use :3
+# hi this is jia and mohammad - we also have another repo with 663 commits which we will continue to open source parts of in the coming days as we clean it up to be nice to use :3
 
 # jam-nodes
 
