@@ -60,7 +60,7 @@ export const runCommand = new Command('run')
       const definition = registry.getDefinition(nodeType);
       if (!definition) {
         console.error(chalk.red(`Unknown node type: ${nodeType}`));
-        console.log(chalk.dim('Use "jam-playground list" to see available nodes'));
+        console.log(chalk.dim('Use "jam list" to see available nodes'));
         process.exit(1);
       }
 

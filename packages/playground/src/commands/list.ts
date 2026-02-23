@@ -119,6 +119,6 @@ export const listCommand = new Command('list')
     }
 
     // Usage hint
-    console.log(chalk.dim('Run a node: jam-playground run <node-type>'));
-    console.log(chalk.dim('Example: jam-playground run conditional'));
+    console.log(chalk.dim('Run a node: jam run <node-type>'));
+    console.log(chalk.dim('Example: jam run conditional'));
   });

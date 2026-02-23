@@ -4,14 +4,14 @@ import {
   SocialAiAnalyzeOutputSchema,
   type SocialPost,
   type AnalyzedPost,
-} from '../schemas/ai';
+} from '../schemas/ai.js';
 import {
   buildAnalysisPrompt,
   normalizeSentiment,
   normalizeUrgency,
   MIN_RELEVANCE_SCORE,
   ANALYSIS_BATCH_SIZE,
-} from '../prompts/analyze-posts';
+} from '../prompts/analyze-posts.js';
 
 // Re-export schemas and types for convenience
 export {
@@ -21,7 +21,7 @@ export {
   type SocialAiAnalyzeOutput,
   type SocialPost,
   type AnalyzedPost,
-} from '../schemas/ai';
+} from '../schemas/ai.js';
 
 /**
  * Social AI Analyze Node

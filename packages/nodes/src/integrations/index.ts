@@ -18,7 +18,7 @@ export {
   type LinkedInMonitorInput,
   type LinkedInMonitorOutput,
   type LinkedInPost,
-} from './social/index';
+} from './social/index.js';
 
 // OpenAI integrations
 export {
@@ -27,7 +27,7 @@ export {
   SoraVideoOutputSchema,
   type SoraVideoInput,
   type SoraVideoOutput,
-} from './openai/index';
+} from './openai/index.js';
 
 // DataForSEO integrations
 export {
@@ -42,7 +42,7 @@ export {
   type SeoAuditInput,
   type SeoAuditOutput,
   type SeoIssue,
-} from './dataforseo/index';
+} from './dataforseo/index.js';
 
 // Apollo integrations
 export {
@@ -51,4 +51,4 @@ export {
   SearchContactsOutputSchema,
   type SearchContactsInput,
   type SearchContactsOutput,
-} from './apollo/index';
+} from './apollo/index.js';

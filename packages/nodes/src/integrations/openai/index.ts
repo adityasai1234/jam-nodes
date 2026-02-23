@@ -4,4 +4,4 @@ export {
   SoraVideoOutputSchema,
   type SoraVideoInput,
   type SoraVideoOutput,
-} from './sora-video';
+} from './sora-video.js';

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { defineNode } from '@jam-nodes/core';
+import { defineNode, type LinkedInPost as ServiceLinkedInPost } from '@jam-nodes/core';
 
 // =============================================================================
 // Types
@@ -162,7 +162,7 @@ export const linkedinMonitorNode = defineNode({
       });
 
       // Transform to unified format
-      const posts: LinkedInPost[] = results.map(post => ({
+      const posts: LinkedInPost[] = results.map((post: ServiceLinkedInPost) => ({
         id: post.id,
         platform: 'linkedin' as const,
         url: post.url,

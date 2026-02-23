@@ -1,9 +1,10 @@
 {
   "name": "@jam-nodes/playground",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI tool for testing jam-nodes interactively",
   "type": "module",
   "bin": {
+    "jam": "./dist/index.js",
     "jam-playground": "./dist/index.js"
   },
   "main": "./dist/index.js",

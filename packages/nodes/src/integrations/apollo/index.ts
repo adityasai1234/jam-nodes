@@ -4,4 +4,4 @@ export {
   SearchContactsOutputSchema,
   type SearchContactsInput,
   type SearchContactsOutput,
-} from './search-contacts';
+} from './search-contacts.js';

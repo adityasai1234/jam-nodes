@@ -4,7 +4,7 @@ export {
   SeoKeywordResearchOutputSchema,
   type SeoKeywordResearchInput,
   type SeoKeywordResearchOutput,
-} from './keyword-research';
+} from './keyword-research.js';
 
 export {
   seoAuditNode,
@@ -13,4 +13,4 @@ export {
   type SeoAuditInput,
   type SeoAuditOutput,
   type SeoIssue,
-} from './seo-audit';
+} from './seo-audit.js';

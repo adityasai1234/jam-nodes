@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { NodeServices } from './services';
+import type { NodeServices } from './services.js';
 
 /**
  * Base execution context passed to all node executors.

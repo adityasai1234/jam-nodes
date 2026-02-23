@@ -23,4 +23,4 @@ export {
   type SocialAiAnalyzeInput,
   type SocialAiAnalyzeOutput,
   type AnalyzedPost,
-} from './ai';
+} from './ai.js';

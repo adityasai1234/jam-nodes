@@ -4,13 +4,13 @@ import {
   DraftEmailsOutputSchema,
   type DraftEmailsOutput,
   type DraftEmailInfo,
-} from '../schemas/ai';
+} from '../schemas/ai.js';
 import {
   buildEmailPrompt,
   buildSubjectPrompt,
   cleanEmailBody,
   cleanSubjectLine,
-} from '../prompts/draft-emails';
+} from '../prompts/draft-emails.js';
 
 // Re-export schemas for convenience
 export {
@@ -22,7 +22,7 @@ export {
   type DraftEmailsOutput,
   type DraftEmailInfo,
   type Contact,
-} from '../schemas/ai';
+} from '../schemas/ai.js';
 
 /**
  * Draft Emails Node

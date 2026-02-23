@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { defineNode } from '@jam-nodes/core';
+import { defineNode, type TwitterPost as ServiceTwitterPost } from '@jam-nodes/core';
 
 // =============================================================================
 // Types
@@ -184,7 +184,7 @@ export const twitterMonitorNode = defineNode({
       });
 
       // Transform to unified format
-      const posts: TwitterPost[] = tweets.map((tweet) => ({
+      const posts: TwitterPost[] = tweets.map((tweet: ServiceTwitterPost) => ({
         id: tweet.id,
         platform: 'twitter' as const,
         url: tweet.url,

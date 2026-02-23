@@ -4,7 +4,7 @@ export {
   SocialKeywordGeneratorOutputSchema,
   type SocialKeywordGeneratorInput,
   type SocialKeywordGeneratorOutput,
-} from './keyword-generator';
+} from './keyword-generator.js';
 
 export {
   draftEmailsNode,
@@ -16,7 +16,7 @@ export {
   type DraftEmailsOutput,
   type DraftEmailInfo,
   type Contact,
-} from './draft-emails';
+} from './draft-emails.js';
 
 export {
   socialAiAnalyzeNode,
@@ -26,4 +26,4 @@ export {
   type SocialAiAnalyzeOutput,
   type SocialPost,
   type AnalyzedPost,
-} from './analyze-posts';
+} from './analyze-posts.js';

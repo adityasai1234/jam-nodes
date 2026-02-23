@@ -1,4 +1,4 @@
-import type { SocialPost } from '../schemas/ai';
+import type { SocialPost } from '../schemas/ai.js';
 
 /**
  * Prompt for analyzing social media posts for relevance, sentiment, and urgency.

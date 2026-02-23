@@ -61,7 +61,7 @@ credentialsCommand
 
     if (saved.length === 0) {
       console.log(chalk.dim('No credentials saved yet.'));
-      console.log(chalk.dim('Use "jam-playground credentials set <service>" to add credentials.'));
+      console.log(chalk.dim('Use "jam credentials set <service>" to add credentials.'));
       return;
     }
 

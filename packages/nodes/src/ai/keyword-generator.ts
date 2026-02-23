@@ -3,8 +3,8 @@ import {
   SocialKeywordGeneratorInputSchema,
   SocialKeywordGeneratorOutputSchema,
   type SocialKeywordGeneratorOutput,
-} from '../schemas/ai';
-import { buildKeywordPrompt } from '../prompts/keyword-generator';
+} from '../schemas/ai.js';
+import { buildKeywordPrompt } from '../prompts/keyword-generator.js';
 
 // Re-export schemas for convenience
 export {
@@ -12,7 +12,7 @@ export {
   SocialKeywordGeneratorOutputSchema,
   type SocialKeywordGeneratorInput,
   type SocialKeywordGeneratorOutput,
-} from '../schemas/ai';
+} from '../schemas/ai.js';
 
 /**
  * Social Keyword Generator Node

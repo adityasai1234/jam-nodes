@@ -1,4 +1,4 @@
-import type { Contact } from '../schemas/ai';
+import type { Contact } from '../schemas/ai.js';
 
 /**
  * Build the email body generation prompt.

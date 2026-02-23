@@ -9,9 +9,9 @@ import {
 } from './commands/index.js';
 
 const program = new Command()
-  .name('jam-playground')
+  .name('jam')
   .description('Test jam-nodes interactively')
-  .version('0.1.0');
+  .version('0.1.1');
 
 // Add commands
 program.addCommand(listCommand);

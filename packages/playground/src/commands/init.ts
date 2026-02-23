@@ -76,5 +76,5 @@ export const initCommand = new Command('init')
     console.log(chalk.bold('Quick start:'));
     console.log(chalk.dim('1. Open .env in your editor'));
     console.log(chalk.dim('2. Add your API keys'));
-    console.log(chalk.dim('3. Run: jam-playground run <node-type>'));
+    console.log(chalk.dim('3. Run: jam run <node-type>'));
   });

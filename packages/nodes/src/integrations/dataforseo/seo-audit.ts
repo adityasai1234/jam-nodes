@@ -246,11 +246,12 @@ export const seoAuditNode = defineNode({
       let failedAudits = 0;
 
       if (onPageResult.checks) {
-        for (const [checkId, checkData] of Object.entries(onPageResult.checks)) {
+        for (const [checkId, rawCheckData] of Object.entries(onPageResult.checks)) {
           if (INFORMATIONAL_CHECKS.has(checkId)) {
             continue;
           }
 
+          const checkData = rawCheckData as { passed: boolean; description?: string; score: number };
           let isPassed: boolean;
 
           if (POSITIVE_CHECKS.has(checkId)) {

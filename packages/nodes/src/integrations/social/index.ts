@@ -5,7 +5,7 @@ export {
   type RedditMonitorInput,
   type RedditMonitorOutput,
   type RedditPost,
-} from './reddit-monitor';
+} from './reddit-monitor.js';
 
 export {
   twitterMonitorNode,
@@ -14,7 +14,7 @@ export {
   type TwitterMonitorInput,
   type TwitterMonitorOutput,
   type TwitterPost,
-} from './twitter-monitor';
+} from './twitter-monitor.js';
 
 export {
   linkedinMonitorNode,
@@ -23,4 +23,4 @@ export {
   type LinkedInMonitorInput,
   type LinkedInMonitorOutput,
   type LinkedInPost,
-} from './linkedin-monitor';
+} from './linkedin-monitor.js';
