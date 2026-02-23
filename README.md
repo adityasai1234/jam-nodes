@@ -1,13 +1,14 @@
-# hi this is jia and mohammad - we also have another repo with 663 commits which we will continue to open source parts of in the coming days as we clean it up to be nice to use :3
-
 # jam-nodes
 
 Extensible workflow node framework for building automation pipelines. Define, register, and execute typed nodes with Zod validation.
+
+📚 **[Documentation](https://docs.spreadjam.com)** · 🎮 **[Playground](https://docs.spreadjam.com/playground/overview)**
 
 ## Packages
 
 - **[@jam-nodes/core](./packages/core)** - Core framework with types, registry, and execution context
 - **[@jam-nodes/nodes](./packages/nodes)** - Built-in nodes (conditional, delay, filter, map, http-request)
+- **[@jam-nodes/playground](./packages/playground)** - CLI tool for testing nodes interactively
 
 ## Installation
 

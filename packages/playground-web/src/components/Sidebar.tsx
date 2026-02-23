@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { PanelLeftClose, PanelLeft, Search, Github, Sun, Moon } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Search, Github, Sun, Moon, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { JamLogoOutline } from '@/components/JamLogoOutline';
 import { Input } from '@/components/ui/input';
@@ -248,7 +248,7 @@ export function Sidebar({ nodes, selectedNode, onSelect }: SidebarProps) {
           )}
         </nav>
 
-        {/* Bottom section: Theme toggle and GitHub */}
+        {/* Bottom section: Theme toggle, Docs, and GitHub */}
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-2">
             {mounted && (
@@ -261,19 +261,38 @@ export function Sidebar({ nodes, selectedNode, onSelect }: SidebarProps) {
               </button>
             )}
             <a
-              href="https://github.com/anthropics/jam-nodes"
+              href="https://docs.spreadjam.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors"
+              title="Documentation"
+            >
+              <BookOpen className="h-4 w-4" />
+            </a>
+            <a
+              href="https://github.com/wespreadjam/jam-nodes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors"
+              title="GitHub"
             >
               <Github className="h-4 w-4" />
             </a>
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <a
-                href="https://github.com/anthropics/jam-nodes"
+                href="https://docs.spreadjam.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-8 items-center gap-2 rounded-lg px-2 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Docs</span>
+              </a>
+              <a
+                href="https://github.com/wespreadjam/jam-nodes"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-8 items-center gap-2 rounded-lg px-2 hover:bg-muted transition-colors text-sm text-muted-foreground hover:text-foreground"
