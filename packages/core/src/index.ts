@@ -31,6 +31,30 @@ export type {
   EmailDraft,
   AnalyzedPostsStorage,
   AnalyzedPostData,
+  // Credential types
+  CredentialType,
+  AuthenticateType,
+  CredentialAuthenticate,
+  OAuth2Config,
+  BaseCredentialDefinition,
+  ApiKeyCredentialDefinition,
+  OAuth2CredentialDefinition,
+  BearerCredentialDefinition,
+  BasicCredentialDefinition,
+  WebhookCredentialDefinition,
+  CustomCredentialDefinition,
+  CredentialDefinition,
+  ResolvedCredentials,
+  CredentialProvider,
+  CredentialRegistry,
+} from './types/index.js';
+
+// Credential helpers
+export {
+  defineApiKeyCredential,
+  defineOAuth2Credential,
+  defineBearerCredential,
+  defineBasicCredential,
 } from './types/index.js';
 
 // Execution context

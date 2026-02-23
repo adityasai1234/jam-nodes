@@ -7,5 +7,5 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #2682 | 4:29 PM | 🔵 | NodeRegistry Implementation with Type-Safe Registration and Metadata Extraction | ~574 |
+| #2800 | 5:19 PM | 🔄 | Removed obsolete NodePicker component and generic logo SVG | ~238 |
 </claude-mem-context>

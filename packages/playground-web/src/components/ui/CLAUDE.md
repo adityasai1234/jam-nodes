@@ -7,5 +7,6 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #2682 | 4:29 PM | 🔵 | NodeRegistry Implementation with Type-Safe Registration and Metadata Extraction | ~574 |
+| #2797 | 5:18 PM | 🔄 | Simplified badge component to remove CVA dependency while keeping category variants | ~396 |
+| #2796 | " | 🟣 | Enhanced Button component with minions styling and advanced features | ~524 |
 </claude-mem-context>

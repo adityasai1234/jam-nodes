@@ -7,6 +7,7 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #1494 | 6:27 PM | 🔵 | Node Services Dependency Injection System | ~561 |
 | #1439 | 6:14 PM | 🟣 | Service Interface Definitions for Optional Node Dependencies | ~655 |
 | #1438 | " | 🔵 | Core Package Type Exports Define Service Integration Interfaces | ~548 |
 | #1423 | 6:12 PM | 🔵 | Core package type system structure revealed | ~571 |
@@ -17,4 +18,20 @@
 | #1378 | " | 🟣 | Node Services Interfaces for External Integrations | ~507 |
 | #1232 | 4:28 PM | 🟣 | Committed jam-nodes open-source framework with core types and example node implementations | ~557 |
 | #1230 | 4:26 PM | 🟣 | Jam-Nodes Repository Initial Structure Staged | ~512 |
+
+### Feb 22, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #2690 | 4:29 PM | 🔵 | Service Abstraction Layer Defines Optional Injectable Dependencies for Nodes | ~761 |
+| #2683 | " | 🔵 | Comprehensive Credential Type System in Core Package | ~711 |
+| #2648 | 4:19 PM | ✅ | Credential Type System Added to Core Package Exports | ~525 |
+| #2646 | 4:18 PM | 🟣 | Credential System Types Added to Jam-Nodes Core | ~647 |
+| #2645 | " | 🔵 | Jam-Nodes Core Type Definitions for Node Framework | ~555 |
+
+### Feb 23, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #2928 | 2:30 PM | ✅ | Added credential type exports to core package public API | ~403 |
 </claude-mem-context>

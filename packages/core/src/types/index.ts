@@ -36,3 +36,28 @@ export type {
   AnalyzedPostsStorage,
   AnalyzedPostData,
 } from './services.js';
+
+export type {
+  CredentialType,
+  AuthenticateType,
+  CredentialAuthenticate,
+  OAuth2Config,
+  BaseCredentialDefinition,
+  ApiKeyCredentialDefinition,
+  OAuth2CredentialDefinition,
+  BearerCredentialDefinition,
+  BasicCredentialDefinition,
+  WebhookCredentialDefinition,
+  CustomCredentialDefinition,
+  CredentialDefinition,
+  ResolvedCredentials,
+  CredentialProvider,
+  CredentialRegistry,
+} from './credentials.js';
+
+export {
+  defineApiKeyCredential,
+  defineOAuth2Credential,
+  defineBearerCredential,
+  defineBasicCredential,
+} from './credentials.js';

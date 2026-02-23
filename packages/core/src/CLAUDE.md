@@ -10,4 +10,19 @@
 | #1232 | 4:28 PM | 🟣 | Committed jam-nodes open-source framework with core types and example node implementations | ~557 |
 | #1230 | 4:26 PM | 🟣 | Jam-Nodes Repository Initial Structure Staged | ~512 |
 | #1209 | 4:23 PM | 🟣 | jam-nodes Core Package Main Export File Created | ~451 |
+
+### Feb 22, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #2689 | 4:29 PM | 🔵 | Core Package Already Exports Comprehensive Credential Type System | ~561 |
+| #2649 | 4:19 PM | 🟣 | Credential System Types and Helpers Added to Core Package Exports | ~490 |
+| #2592 | 3:35 PM | 🔵 | Core Package Exports Service Abstraction Interfaces | ~533 |
+| #2553 | 3:27 PM | 🔵 | Core package exports comprehensive node execution framework and service integrations | ~359 |
+
+### Feb 23, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #2928 | 2:30 PM | ✅ | Added credential type exports to core package public API | ~403 |
 </claude-mem-context>

@@ -49,3 +49,8 @@ jobs:
         run: cd packages/nodes && npm publish --access public --provenance || true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @jam-nodes/playground
+        run: cd packages/playground && npm publish --access public --provenance || true
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
