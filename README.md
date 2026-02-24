@@ -141,4 +141,6 @@ ctx.evaluateJsonPath('$.user.email'); // "alice@example.com"
 
 ## License
 
+also we have a github with 668 contributions which we will open source more of in the coming days - jia and mal
+
 MIT
