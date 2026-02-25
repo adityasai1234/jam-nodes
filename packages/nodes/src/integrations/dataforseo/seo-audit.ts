@@ -1,5 +1,12 @@
 import { z } from 'zod';
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../../utils/http.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const DATAFORSEO_BASE_URL = 'https://api.dataforseo.com/v3';
 
 // =============================================================================
 // Types
@@ -11,6 +18,32 @@ export interface SeoIssue {
   description: string;
   score: number;
   displayValue?: string;
+}
+
+interface OnPageCheck {
+  passed: boolean;
+  description?: string;
+  score: number;
+}
+
+interface DataForSEOOnPageResponse {
+  status_code: number;
+  status_message: string;
+  cost?: number;
+  tasks?: Array<{
+    result?: Array<{
+      items?: Array<{
+        onpage_score?: number;
+        checks?: Record<string, OnPageCheck>;
+        meta?: {
+          title?: string;
+          description?: string;
+          canonical?: string;
+          htags?: Record<string, string[]>;
+        };
+      }>;
+    }>;
+  }>;
 }
 
 // =============================================================================
@@ -146,6 +179,51 @@ function validateUrl(url: string): { isValid: boolean; error?: string } {
   }
 }
 
+/**
+ * Run on-page SEO audit using DataForSEO
+ */
+async function runOnPageAudit(
+  apiToken: string,
+  url: string
+): Promise<DataForSEOOnPageResponse> {
+  const requestBody = [{
+    url,
+    enable_javascript: false,
+    load_resources: true,
+    enable_browser_rendering: false,
+    browser_preset: 'desktop',
+    store_raw_html: false,
+    disable_cookie_popup: true,
+    check_spell: false,
+  }];
+
+  const response = await fetchWithRetry(
+    `${DATAFORSEO_BASE_URL}/on_page/instant_pages`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 60000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`DataForSEO API error: ${response.status} - ${errorText}`);
+  }
+
+  const data: DataForSEOOnPageResponse = await response.json();
+
+  if (data.status_code !== 20000) {
+    throw new Error(`DataForSEO API error: ${data.status_message}`);
+  }
+
+  return data;
+}
+
 // =============================================================================
 // Node Definition
 // =============================================================================
@@ -157,7 +235,7 @@ function validateUrl(url: string): { isValid: boolean; error?: string } {
  * Provides comprehensive on-page SEO analysis including meta tags,
  * content analysis, technical SEO checks, and performance metrics.
  *
- * Requires `context.services.dataForSeo` to be provided by the host application.
+ * Requires `context.credentials.dataForSeo.apiToken` to be provided.
  *
  * @example
  * ```typescript
@@ -180,11 +258,12 @@ export const seoAuditNode = defineNode({
 
   executor: async (input, context) => {
     try {
-      // Require DataForSEO service
-      if (!context.services?.dataForSeo) {
+      // Check for API token
+      const apiToken = context.credentials?.dataForSeo?.apiToken;
+      if (!apiToken) {
         return {
           success: false,
-          error: 'DataForSEO service not configured. Please provide context.services.dataForSeo.',
+          error: 'DataForSEO API token not configured. Please provide context.credentials.dataForSeo.apiToken.',
         };
       }
 
@@ -234,11 +313,17 @@ export const seoAuditNode = defineNode({
       }
 
       // Call DataForSEO
-      const onPageResult = await context.services.dataForSeo.getOnPageInstant(urlToAudit, {
-        enableJavascript: false,
-      });
+      const auditResponse = await runOnPageAudit(apiToken, urlToAudit);
+      const onPageResult = auditResponse.tasks?.[0]?.result?.[0]?.items?.[0];
 
-      const overallScore = Math.round(onPageResult.onPageScore);
+      if (!onPageResult) {
+        return {
+          success: false,
+          error: 'No audit results returned from DataForSEO',
+        };
+      }
+
+      const overallScore = Math.round(onPageResult.onpage_score || 0);
 
       // Build issues from failed checks
       const issues: SeoIssue[] = [];
@@ -246,12 +331,11 @@ export const seoAuditNode = defineNode({
       let failedAudits = 0;
 
       if (onPageResult.checks) {
-        for (const [checkId, rawCheckData] of Object.entries(onPageResult.checks)) {
+        for (const [checkId, checkData] of Object.entries(onPageResult.checks)) {
           if (INFORMATIONAL_CHECKS.has(checkId)) {
             continue;
           }
 
-          const checkData = rawCheckData as { passed: boolean; description?: string; score: number };
           let isPassed: boolean;
 
           if (POSITIVE_CHECKS.has(checkId)) {
@@ -282,20 +366,6 @@ export const seoAuditNode = defineNode({
         url: urlToAudit,
         meta: onPageResult.meta,
       };
-
-      // Optional: send notification if service available
-      if (context.services?.notifications) {
-        await context.services.notifications.send({
-          userId: context.userId,
-          title: 'SEO Audit Complete',
-          message: `SEO Score: ${overallScore}/100 (${failedAudits} issues found)`,
-          data: {
-            url: urlToAudit,
-            score: overallScore,
-            issues: failedAudits,
-          },
-        });
-      }
 
       return {
         success: true,

@@ -1,5 +1,32 @@
 import { z } from 'zod';
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry, sleep } from '../../utils/http.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const OPENAI_API_BASE = 'https://api.openai.com/v1';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface SoraVideoCreateResponse {
+  id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+}
+
+interface SoraVideoStatusResponse {
+  id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  output?: {
+    url: string;
+  };
+  error?: {
+    message: string;
+  };
+}
 
 // =============================================================================
 // Schemas
@@ -31,6 +58,102 @@ export const SoraVideoOutputSchema = z.object({
 export type SoraVideoOutput = z.infer<typeof SoraVideoOutputSchema>;
 
 // =============================================================================
+// API Functions
+// =============================================================================
+
+/**
+ * Create a Sora video generation request
+ */
+async function createSoraVideo(
+  apiKey: string,
+  params: {
+    prompt: string;
+    model: string;
+    seconds: number;
+    size: string;
+  }
+): Promise<SoraVideoCreateResponse> {
+  const formData = new FormData();
+  formData.append('prompt', params.prompt);
+  formData.append('model', params.model);
+  formData.append('seconds', params.seconds.toString());
+  formData.append('size', params.size);
+
+  const response = await fetchWithRetry(
+    `${OPENAI_API_BASE}/videos`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: formData,
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 60000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+  }
+
+  return response.json() as Promise<SoraVideoCreateResponse>;
+}
+
+/**
+ * Check the status of a Sora video generation
+ */
+async function getSoraVideoStatus(
+  apiKey: string,
+  videoId: string
+): Promise<SoraVideoStatusResponse> {
+  const response = await fetchWithRetry(
+    `${OPENAI_API_BASE}/videos/${videoId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+  }
+
+  return response.json() as Promise<SoraVideoStatusResponse>;
+}
+
+/**
+ * Wait for video generation to complete with polling
+ */
+async function waitForVideoCompletion(
+  apiKey: string,
+  videoId: string,
+  maxWaitMs: number = 300000 // 5 minutes
+): Promise<SoraVideoStatusResponse> {
+  const startTime = Date.now();
+  const pollIntervalMs = 5000; // 5 seconds
+
+  while (Date.now() - startTime < maxWaitMs) {
+    const status = await getSoraVideoStatus(apiKey, videoId);
+
+    if (status.status === 'completed') {
+      return status;
+    }
+
+    if (status.status === 'failed') {
+      throw new Error(status.error?.message || 'Video generation failed');
+    }
+
+    await sleep(pollIntervalMs);
+  }
+
+  throw new Error('Video generation timed out');
+}
+
+// =============================================================================
 // Node Definition
 // =============================================================================
 
@@ -38,7 +161,7 @@ export type SoraVideoOutput = z.infer<typeof SoraVideoOutputSchema>;
  * Sora Video Generation Node
  *
  * Generates videos using OpenAI Sora 2 API.
- * Requires `context.services.openai` to be provided by the host application.
+ * Requires `context.credentials.openai.apiKey` to be provided.
  *
  * @example
  * ```typescript
@@ -64,31 +187,43 @@ export const soraVideoNode = defineNode({
 
   executor: async (input, context) => {
     try {
-      // Require OpenAI service
-      if (!context.services?.openai) {
+      // Check for API key
+      const apiKey = context.credentials?.openai?.apiKey;
+      if (!apiKey) {
         return {
           success: false,
-          error: 'OpenAI service not configured. Please provide context.services.openai.',
+          error: 'OpenAI API key not configured. Please provide context.credentials.openai.apiKey.',
         };
       }
 
       const startTime = Date.now();
 
-      const result = await context.services.openai.generateVideo({
+      // Create video generation request
+      const createResponse = await createSoraVideo(apiKey, {
         prompt: input.prompt,
         model: input.model || 'sora-2',
         seconds: input.seconds || 4,
         size: input.size || '1280x720',
       });
 
+      // Wait for completion
+      const completedVideo = await waitForVideoCompletion(apiKey, createResponse.id);
+
       const processingTimeSeconds = Math.round((Date.now() - startTime) / 1000);
+
+      if (!completedVideo.output?.url) {
+        return {
+          success: false,
+          error: 'Video generation completed but no URL returned',
+        };
+      }
 
       return {
         success: true,
         output: {
           video: {
-            url: result.url,
-            durationSeconds: result.durationSeconds,
+            url: completedVideo.output.url,
+            durationSeconds: input.seconds || 4,
             size: input.size || '1280x720',
             model: input.model || 'sora-2',
           },

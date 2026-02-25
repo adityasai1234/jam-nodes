@@ -1,5 +1,55 @@
 import { z } from 'zod';
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry, sleep } from '../../utils/http.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const APOLLO_API_BASE = 'https://api.apollo.io/api/v1';
+
+// =============================================================================
+// Apollo API Types
+// =============================================================================
+
+interface ApolloPerson {
+  id: string;
+  first_name: string;
+  last_name?: string;
+  last_name_obfuscated?: string;
+  name?: string;
+  email?: string | null;
+  has_email?: boolean;
+  title: string;
+  linkedin_url?: string | null;
+  organization_name?: string;
+  organization?: {
+    id?: string;
+    name: string;
+    website_url?: string | null;
+    linkedin_url?: string | null;
+    industry?: string | null;
+    estimated_num_employees?: number | null;
+  };
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+}
+
+interface ApolloSearchResponse {
+  people?: ApolloPerson[];
+  total_entries?: number;
+  pagination?: {
+    page: number;
+    per_page: number;
+    total_entries: number;
+    total_pages: number;
+  };
+}
+
+interface ApolloEnrichResponse {
+  person?: ApolloPerson | null;
+}
 
 // =============================================================================
 // Schemas
@@ -50,6 +100,121 @@ export const SearchContactsOutputSchema = z.object({
 export type SearchContactsOutput = z.infer<typeof SearchContactsOutputSchema>;
 
 // =============================================================================
+// Apollo API Functions
+// =============================================================================
+
+/**
+ * Search Apollo for contacts matching criteria
+ */
+async function searchApolloContacts(
+  apiKey: string,
+  params: {
+    personTitles?: string[];
+    personLocations?: string[];
+    organizationLocations?: string[];
+    employeeRanges?: string[];
+    keywords?: string;
+    limit?: number;
+    includeSimilarTitles?: boolean;
+    personSeniorities?: string[];
+    technologies?: string[];
+    industryTagIds?: string[];
+    departments?: string[];
+  }
+): Promise<ApolloPerson[]> {
+  const defaultLocation = params.personLocations && params.personLocations.length > 0
+    ? params.personLocations
+    : ['United States'];
+
+  const requestBody: Record<string, unknown> = {
+    ...(params.personTitles && params.personTitles.length > 0 && {
+      person_titles: params.personTitles
+    }),
+    person_locations: defaultLocation,
+    include_similar_titles: params.includeSimilarTitles ?? true,
+    page: 1,
+    per_page: Math.min(params.limit || 100, 100),
+    ...(params.keywords && { q_keywords: params.keywords }),
+    ...(params.personSeniorities && params.personSeniorities.length > 0 && {
+      person_seniorities: params.personSeniorities
+    }),
+    ...(params.organizationLocations && params.organizationLocations.length > 0 && {
+      organization_locations: params.organizationLocations
+    }),
+    ...(params.employeeRanges && params.employeeRanges.length > 0 && {
+      organization_num_employees_ranges: params.employeeRanges
+    }),
+    ...(params.technologies && params.technologies.length > 0 && {
+      currently_using_any_of_technology_uids: params.technologies
+    }),
+    ...(params.industryTagIds && params.industryTagIds.length > 0 && {
+      organization_industry_tag_ids: params.industryTagIds
+    }),
+    ...(params.departments && params.departments.length > 0 && {
+      person_departments: params.departments
+    }),
+  };
+
+  const response = await fetchWithRetry(
+    `${APOLLO_API_BASE}/mixed_people/api_search`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'X-Api-Key': apiKey,
+      },
+      body: JSON.stringify(requestBody),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Apollo API error: ${response.status} - ${errorText}`);
+  }
+
+  const data: ApolloSearchResponse = await response.json();
+  const allPeople = data.people || [];
+
+  // Filter to contacts with has_email flag (email must be revealed via enrichment)
+  return allPeople.filter((person) => person.has_email === true);
+}
+
+/**
+ * Enrich a contact to reveal their email address
+ */
+async function enrichApolloContact(
+  apiKey: string,
+  personId: string
+): Promise<ApolloPerson | null> {
+  const response = await fetchWithRetry(
+    `${APOLLO_API_BASE}/people/match`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'X-Api-Key': apiKey,
+      },
+      body: JSON.stringify({
+        id: personId,
+        reveal_personal_emails: true,
+      }),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Apollo enrich error: ${response.status} - ${errorText}`);
+  }
+
+  const data: ApolloEnrichResponse = await response.json();
+  return data.person || null;
+}
+
+// =============================================================================
 // Node Definition
 // =============================================================================
 
@@ -57,7 +222,7 @@ export type SearchContactsOutput = z.infer<typeof SearchContactsOutputSchema>;
  * Search Contacts Node
  *
  * Searches for contacts using Apollo.io API with email enrichment.
- * Requires `context.services.apollo` to be provided by the host application.
+ * Requires `context.credentials.apollo.apiKey` to be provided.
  *
  * Process:
  * 1. Search Apollo for contacts matching criteria
@@ -89,23 +254,28 @@ export const searchContactsNode = defineNode({
 
   executor: async (input, context) => {
     try {
-      // Require Apollo service
-      if (!context.services?.apollo) {
+      // Check for API key
+      const apiKey = context.credentials?.apollo?.apiKey;
+      if (!apiKey) {
         return {
           success: false,
-          error: 'Apollo service not configured. Please provide context.services.apollo.',
+          error: 'Apollo API key not configured. Please provide context.credentials.apollo.apiKey.',
         };
       }
 
       // Search contacts
-      const results = await context.services.apollo.searchContacts({
+      const results = await searchApolloContacts(apiKey, {
         personTitles: input.personTitles,
         personLocations: input.personLocations,
         organizationLocations: input.organizationLocations,
+        employeeRanges: input.employeeRanges,
         keywords: input.keywords,
         limit: Math.min(input.limit || 10, 100),
+        includeSimilarTitles: input.includeSimilarTitles,
         personSeniorities: input.personSeniorities,
         technologies: input.technologies,
+        industryTagIds: input.industryTagIds,
+        departments: input.departments,
       });
 
       if (results.length === 0) {
@@ -126,51 +296,46 @@ export const searchContactsNode = defineNode({
         lastName?: string;
         email: string;
         title?: string;
-        company?: string;
-        linkedinUrl?: string;
-        location?: string;
+        company: string;
+        linkedinUrl?: string | null;
+        location?: string | null;
       }> = [];
 
       for (const contact of results) {
         if (contact.id) {
           try {
-            const enriched = await context.services.apollo.enrichContact(contact.id);
-            if (enriched.email) {
+            const enriched = await enrichApolloContact(apiKey, contact.id);
+            if (enriched?.email) {
+              const lastName = enriched.last_name || enriched.last_name_obfuscated || '';
+              const fullName = enriched.name || `${enriched.first_name || ''} ${lastName}`.trim() || 'Unknown';
+              const company = enriched.organization_name || enriched.organization?.name || 'Unknown';
+
               enrichedContacts.push({
                 id: enriched.id,
-                name: enriched.name,
-                firstName: enriched.firstName,
-                lastName: enriched.lastName,
+                name: fullName,
+                firstName: enriched.first_name,
+                lastName: lastName || undefined,
                 email: enriched.email,
                 title: enriched.title,
-                company: enriched.company,
-                linkedinUrl: enriched.linkedinUrl,
-                location: enriched.location,
+                company,
+                linkedinUrl: enriched.linkedin_url,
+                location: [enriched.city, enriched.state, enriched.country]
+                  .filter(Boolean)
+                  .join(', ') || null,
               });
             }
+            // Small delay to avoid rate limiting
+            await sleep(200);
           } catch {
             // Skip contacts that fail to enrich
           }
         }
       }
 
-      // Transform to output format
-      const contacts = enrichedContacts.map(person => ({
-        id: person.id,
-        name: person.name,
-        firstName: person.firstName,
-        lastName: person.lastName,
-        email: person.email,
-        title: person.title,
-        company: person.company || 'Unknown',
-        linkedinUrl: person.linkedinUrl || null,
-        location: person.location || null,
-      }));
-
       return {
         success: true,
         output: {
-          contacts,
+          contacts: enrichedContacts,
           totalFound: results.length,
         },
       };

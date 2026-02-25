@@ -1,4 +1,5 @@
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../utils/http.js';
 import {
   SocialAiAnalyzeInputSchema,
   SocialAiAnalyzeOutputSchema,
@@ -12,6 +13,73 @@ import {
   MIN_RELEVANCE_SCORE,
   ANALYSIS_BATCH_SIZE,
 } from '../prompts/analyze-posts.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
+const ANTHROPIC_VERSION = '2023-06-01';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface AnthropicMessagesResponse {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+}
+
+// =============================================================================
+// API Functions
+// =============================================================================
+
+/**
+ * Generate text using Anthropic Claude API
+ */
+async function generateText(
+  apiKey: string,
+  prompt: string,
+  options: {
+    model?: string;
+    maxTokens?: number;
+  } = {}
+): Promise<string> {
+  const { model = 'claude-sonnet-4-20250514', maxTokens = 4000 } = options;
+
+  const response = await fetchWithRetry(
+    `${ANTHROPIC_API_BASE}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      }),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 120000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
+  }
+
+  const data: AnthropicMessagesResponse = await response.json();
+  return data.content[0]?.text || '';
+}
 
 // Re-export schemas and types for convenience
 export {
@@ -29,8 +97,10 @@ export {
  * Uses Claude to analyze social media posts for relevance, sentiment,
  * complaint detection, and urgency. Batches posts to stay within context limits.
  *
- * Requires `context.services.anthropic` to be provided by the host application.
- * Optionally uses `context.services.analyzedPosts` to store results.
+ * Requires `context.credentials.anthropic.apiKey` to be provided.
+ *
+ * Note: This node analyzes posts but does NOT store results.
+ * Storage is the responsibility of the host application.
  *
  * @example
  * ```typescript
@@ -57,11 +127,12 @@ export const socialAiAnalyzeNode = defineNode({
 
   executor: async (input, context) => {
     try {
-      // Require Anthropic service
-      if (!context.services?.anthropic) {
+      // Check for API key
+      const apiKey = context.credentials?.anthropic?.apiKey;
+      if (!apiKey) {
         return {
           success: false,
-          error: 'Anthropic service not configured. Please provide context.services.anthropic.',
+          error: 'Anthropic API key not configured. Please provide context.credentials.anthropic.apiKey.',
         };
       }
 
@@ -96,8 +167,7 @@ export const socialAiAnalyzeNode = defineNode({
 
         const prompt = buildAnalysisPrompt(input.topic, input.userIntent, batch);
 
-        const responseText = await context.services.anthropic.generateText({
-          prompt,
+        const responseText = await generateText(apiKey, prompt, {
           model: 'claude-sonnet-4-20250514',
           maxTokens: 4000,
         });
@@ -156,45 +226,6 @@ export const socialAiAnalyzeNode = defineNode({
                 allAnalyzedPosts.length
             )
           : 0;
-
-      // Store analyzed posts if service available
-      if (context.services?.analyzedPosts && input.monitoringConfigId && allAnalyzedPosts.length > 0) {
-        await context.services.analyzedPosts.storePosts({
-          monitoringConfigId: input.monitoringConfigId,
-          posts: allAnalyzedPosts.map(post => ({
-            platform: post.platform,
-            externalId: post.id,
-            url: post.url,
-            text: post.text,
-            authorName: post.authorName,
-            authorHandle: post.authorHandle,
-            authorUrl: post.authorUrl,
-            authorFollowers: post.authorFollowers,
-            engagement: post.engagement,
-            relevanceScore: post.relevanceScore,
-            sentiment: post.sentiment,
-            isComplaint: post.isComplaint,
-            urgencyLevel: post.urgencyLevel,
-            aiSummary: post.aiSummary,
-            matchedKeywords: post.matchedKeywords,
-            postedAt: new Date(post.postedAt),
-          })),
-        });
-      }
-
-      // Optional: send notification if service available
-      if (context.services?.notifications && allAnalyzedPosts.length > 0) {
-        await context.services.notifications.send({
-          userId: context.userId,
-          title: 'Social Posts Analyzed',
-          message: `Analyzed ${allAnalyzedPosts.length} posts (${highPriorityPosts.length} high priority)`,
-          data: {
-            totalAnalyzed: allAnalyzedPosts.length,
-            highPriority: highPriorityPosts.length,
-            complaints: complaints.length,
-          },
-        });
-      }
 
       return {
         success: true,

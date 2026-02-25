@@ -1,5 +1,40 @@
 import { z } from 'zod';
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../../utils/http.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const DATAFORSEO_BASE_URL = 'https://api.dataforseo.com/v3';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface DataForSEOKeywordIdea {
+  keyword: string;
+  keyword_info?: {
+    search_volume?: number;
+    cpc?: number;
+  };
+  keyword_properties?: {
+    keyword_difficulty?: number;
+  };
+  search_intent_info?: {
+    main_intent?: string;
+  };
+}
+
+interface DataForSEOResponse {
+  status_code: number;
+  status_message: string;
+  tasks?: Array<{
+    result?: Array<{
+      items?: DataForSEOKeywordIdea[];
+    }>;
+  }>;
+}
 
 // =============================================================================
 // Schemas
@@ -32,6 +67,70 @@ export const SeoKeywordResearchOutputSchema = z.object({
 export type SeoKeywordResearchOutput = z.infer<typeof SeoKeywordResearchOutputSchema>;
 
 // =============================================================================
+// API Functions
+// =============================================================================
+
+/**
+ * Get keyword ideas from DataForSEO
+ */
+async function getKeywordIdeas(
+  apiToken: string,
+  keywords: string[],
+  options: {
+    locationCode?: number;
+    languageCode?: string;
+    limit?: number;
+  }
+): Promise<DataForSEOKeywordIdea[]> {
+  const requestBody = [{
+    keywords,
+    location_code: options.locationCode || 2840,
+    language_code: options.languageCode || 'en',
+    include_serp_info: false,
+    include_clickstream_data: false,
+    limit: options.limit || 30,
+    offset: 0,
+  }];
+
+  const response = await fetchWithRetry(
+    `${DATAFORSEO_BASE_URL}/dataforseo_labs/google/keyword_ideas/live`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`DataForSEO API error: ${response.status} - ${errorText}`);
+  }
+
+  const data: DataForSEOResponse = await response.json();
+
+  if (data.status_code !== 20000) {
+    throw new Error(`DataForSEO API error: ${data.status_message}`);
+  }
+
+  return data.tasks?.[0]?.result?.[0]?.items || [];
+}
+
+/**
+ * Normalize search intent to valid enum value
+ */
+function normalizeSearchIntent(intent: string | undefined): 'informational' | 'commercial' | 'navigational' | 'transactional' {
+  const normalized = (intent || 'informational').toLowerCase();
+  if (['informational', 'commercial', 'navigational', 'transactional'].includes(normalized)) {
+    return normalized as 'informational' | 'commercial' | 'navigational' | 'transactional';
+  }
+  return 'informational';
+}
+
+// =============================================================================
 // Node Definition
 // =============================================================================
 
@@ -41,7 +140,7 @@ export type SeoKeywordResearchOutput = z.infer<typeof SeoKeywordResearchOutputSc
  * Takes seed keywords and enriches them with search volume, keyword difficulty,
  * CPC, and search intent data using DataForSEO API.
  *
- * Requires `context.services.dataForSeo` to be provided by the host application.
+ * Requires `context.credentials.dataForSeo.apiToken` to be provided.
  *
  * @example
  * ```typescript
@@ -66,11 +165,12 @@ export const seoKeywordResearchNode = defineNode({
 
   executor: async (input, context) => {
     try {
-      // Require DataForSEO service
-      if (!context.services?.dataForSeo) {
+      // Check for API token
+      const apiToken = context.credentials?.dataForSeo?.apiToken;
+      if (!apiToken) {
         return {
           success: false,
-          error: 'DataForSEO service not configured. Please provide context.services.dataForSeo.',
+          error: 'DataForSEO API token not configured. Please provide context.credentials.dataForSeo.apiToken.',
         };
       }
 
@@ -82,14 +182,11 @@ export const seoKeywordResearchNode = defineNode({
         if (!seedKeyword.trim()) continue;
 
         try {
-          const results = await context.services.dataForSeo.getRelatedKeywords(
-            [seedKeyword],
-            {
-              locationCode: input.locationCode ?? 2840,
-              languageCode: input.languageCode ?? 'en',
-              limit: input.limit ?? 30,
-            }
-          );
+          const results = await getKeywordIdeas(apiToken, [seedKeyword], {
+            locationCode: input.locationCode ?? 2840,
+            languageCode: input.languageCode ?? 'en',
+            limit: input.limit ?? 30,
+          });
 
           for (const kw of results) {
             // Skip duplicates
@@ -98,10 +195,10 @@ export const seoKeywordResearchNode = defineNode({
 
             researchedKeywords.push({
               keyword: kw.keyword,
-              searchVolume: kw.searchVolume,
-              keywordDifficulty: kw.keywordDifficulty,
-              cpc: kw.cpc.toString(),
-              searchIntent: kw.searchIntent,
+              searchVolume: kw.keyword_info?.search_volume || 0,
+              keywordDifficulty: kw.keyword_properties?.keyword_difficulty || 0,
+              cpc: (kw.keyword_info?.cpc || 0).toString(),
+              searchIntent: normalizeSearchIntent(kw.search_intent_info?.main_intent),
             });
           }
         } catch (kwError) {

@@ -6,6 +6,7 @@ Thank you for your interest in contributing to jam-nodes! This guide will help y
 
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
+- [Credentials Pattern](#credentials-pattern)
 - [Adding a New Node](#adding-a-new-node)
 - [Adding a New Credential](#adding-a-new-credential)
 - [Testing](#testing)
@@ -48,9 +49,9 @@ jam-nodes/
 │   ├── core/                    # Core framework
 │   │   └── src/
 │   │       ├── types/           # TypeScript types
-│   │       │   ├── node.ts      # Node types
-│   │       │   ├── credentials.ts # Credential types
-│   │       │   └── services.ts  # Service interfaces
+│   │       │   ├── node.ts      # Node types (includes NodeCredentials)
+│   │       │   ├── credentials.ts # Credential definition types
+│   │       │   └── services.ts  # Service interfaces (deprecated)
 │   │       ├── execution/       # Execution context
 │   │       ├── registry/        # Node registry
 │   │       └── utils/           # Utilities (defineNode, etc.)
@@ -64,11 +65,95 @@ jam-nodes/
 │           │   ├── hunter/      # <- You might add this!
 │           │   └── ...
 │           ├── ai/              # AI-powered nodes
+│           ├── utils/           # HTTP utilities (fetchWithRetry, etc.)
 │           └── examples/        # Example nodes
 │
 ├── GITHUB_ISSUES.md             # Detailed specs for planned nodes
 └── CONTRIBUTING.md              # This file
 ```
+
+---
+
+## Credentials Pattern
+
+**IMPORTANT:** jam-nodes uses direct HTTP calls with credentials, NOT injected services.
+
+### How it Works
+
+Nodes receive API credentials via `context.credentials` and make HTTP calls directly:
+
+```typescript
+executor: async (input, context) => {
+  // Get API key from credentials
+  const apiKey = context.credentials?.apollo?.apiKey;
+  if (!apiKey) {
+    return {
+      success: false,
+      error: 'Apollo API key not configured. Please provide context.credentials.apollo.apiKey.',
+    };
+  }
+
+  // Make direct HTTP call
+  const response = await fetchWithRetry(
+    'https://api.apollo.io/api/v1/...',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+      },
+      body: JSON.stringify(requestBody),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
+  );
+
+  // Handle response...
+}
+```
+
+### Available Credential Types
+
+The `NodeCredentials` interface in `@jam-nodes/core` defines available credentials:
+
+```typescript
+interface NodeCredentials {
+  apollo?: { apiKey: string };
+  twitter?: { bearerToken?: string; twitterApiIoKey?: string };
+  forumScout?: { apiKey: string };
+  dataForSeo?: { apiToken: string };  // Base64 encoded login:password
+  openai?: { apiKey: string };
+  anthropic?: { apiKey: string };
+  // Add new credential types here when contributing
+}
+```
+
+### Using fetchWithRetry
+
+Always use the `fetchWithRetry` utility for HTTP calls:
+
+```typescript
+import { fetchWithRetry } from '../../utils/http.js';
+
+const response = await fetchWithRetry(
+  url,
+  {
+    method: 'POST',
+    headers: { ... },
+    body: JSON.stringify(data),
+  },
+  {
+    maxRetries: 3,      // Number of retry attempts
+    backoffMs: 1000,    // Base delay for exponential backoff
+    timeoutMs: 30000,   // Request timeout
+  }
+);
+```
+
+This provides:
+- Automatic retry on rate limits (429) and server errors (5xx)
+- Exponential backoff
+- Configurable timeouts
+- Proper error handling
 
 ---
 
@@ -158,11 +243,12 @@ export type HunterEmail = z.infer<typeof HunterEmailSchema>;
 
 ### Step 5: Implement the Node
 
-Use `defineNode` from `@jam-nodes/core`:
+Use `defineNode` from `@jam-nodes/core` and `fetchWithRetry` from the utils:
 
 ```typescript
 // domainSearch.ts
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../../utils/http.js';
 import { HunterDomainSearchInputSchema, HunterDomainSearchOutputSchema } from './schemas';
 import type { HunterDomainSearchInput, HunterDomainSearchOutput } from './types';
 
@@ -181,16 +267,19 @@ export const hunterDomainSearchNode = defineNode({
     error?: string;
   }> {
     try {
-      // Get credentials from injected services
-      const hunter = context.services?.hunter;
-      if (!hunter?.apiKey) {
-        return { success: false, error: 'Hunter API credentials not configured' };
+      // Get credentials from context.credentials (NOT context.services)
+      const apiKey = context.credentials?.hunter?.apiKey;
+      if (!apiKey) {
+        return {
+          success: false,
+          error: 'Hunter API key not configured. Please provide context.credentials.hunter.apiKey.',
+        };
       }
 
       // Build query parameters
       const params = new URLSearchParams({
         domain: input.domain,
-        api_key: hunter.apiKey,
+        api_key: apiKey,
         limit: String(input.limit ?? 10),
       });
 
@@ -198,15 +287,19 @@ export const hunterDomainSearchNode = defineNode({
       if (input.seniority) params.set('seniority', input.seniority.join(','));
       if (input.department) params.set('department', input.department.join(','));
 
-      // Make API request
-      const response = await fetch(
+      // Make API request with retry logic
+      const response = await fetchWithRetry(
         `https://api.hunter.io/v2/domain-search?${params}`,
-        { method: 'GET' }
+        { method: 'GET' },
+        { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        return { success: false, error: error.errors?.[0]?.details || 'API request failed' };
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `Hunter API error: ${response.status} - ${errorText}`,
+        };
       }
 
       const data = await response.json();

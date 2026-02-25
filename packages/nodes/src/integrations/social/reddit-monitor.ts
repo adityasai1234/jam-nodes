@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../../utils/http.js';
 
 // =============================================================================
 // Types
@@ -124,14 +125,19 @@ async function searchReddit(
 
   const url = `https://www.reddit.com/search.json?${params.toString()}`;
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; JamNodes/1.0)',
+  const response = await fetchWithRetry(
+    url,
+    {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; JamNodes/1.0)',
+      },
     },
-  });
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
+  );
 
   if (!response.ok) {
-    throw new Error(`Reddit API error: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Reddit API error: ${response.status} - ${errorText}`);
   }
 
   return response.json() as Promise<RedditSearchResponse>;
@@ -217,16 +223,6 @@ export const redditMonitorNode = defineNode({
       allPosts.sort(
         (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
       );
-
-      // Optional: send notification if service available
-      if (context.services?.notifications && allPosts.length > 0) {
-        await context.services.notifications.send({
-          userId: context.userId,
-          title: 'Reddit Monitor Complete',
-          message: `Found ${allPosts.length} Reddit posts`,
-          data: { posts: allPosts.slice(0, 5) },
-        });
-      }
 
       return {
         success: true,

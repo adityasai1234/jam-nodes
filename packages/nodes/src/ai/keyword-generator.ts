@@ -1,10 +1,78 @@
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../utils/http.js';
 import {
   SocialKeywordGeneratorInputSchema,
   SocialKeywordGeneratorOutputSchema,
   type SocialKeywordGeneratorOutput,
 } from '../schemas/ai.js';
 import { buildKeywordPrompt } from '../prompts/keyword-generator.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
+const ANTHROPIC_VERSION = '2023-06-01';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface AnthropicMessagesResponse {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+}
+
+// =============================================================================
+// API Functions
+// =============================================================================
+
+/**
+ * Generate text using Anthropic Claude API
+ */
+async function generateText(
+  apiKey: string,
+  prompt: string,
+  options: {
+    model?: string;
+    maxTokens?: number;
+  } = {}
+): Promise<string> {
+  const { model = 'claude-sonnet-4-20250514', maxTokens = 2000 } = options;
+
+  const response = await fetchWithRetry(
+    `${ANTHROPIC_API_BASE}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      }),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 60000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
+  }
+
+  const data: AnthropicMessagesResponse = await response.json();
+  return data.content[0]?.text || '';
+}
 
 // Re-export schemas for convenience
 export {
@@ -21,7 +89,7 @@ export {
  * natural language topic description. Outputs ready-to-use search queries
  * for Twitter, Reddit, and LinkedIn.
  *
- * Requires `context.services.anthropic` to be provided by the host application.
+ * Requires `context.credentials.anthropic.apiKey` to be provided.
  *
  * @example
  * ```typescript
@@ -45,11 +113,12 @@ export const socialKeywordGeneratorNode = defineNode({
 
   executor: async (input, context) => {
     try {
-      // Require Anthropic service
-      if (!context.services?.anthropic) {
+      // Check for API key
+      const apiKey = context.credentials?.anthropic?.apiKey;
+      if (!apiKey) {
         return {
           success: false,
-          error: 'Anthropic service not configured. Please provide context.services.anthropic.',
+          error: 'Anthropic API key not configured. Please provide context.credentials.anthropic.apiKey.',
         };
       }
 
@@ -57,8 +126,7 @@ export const socialKeywordGeneratorNode = defineNode({
       const prompt = buildKeywordPrompt(input.topic, input.userKeywords);
 
       // Call Claude to generate keywords
-      const responseText = await context.services.anthropic.generateText({
-        prompt,
+      const responseText = await generateText(apiKey, prompt, {
         model: 'claude-sonnet-4-20250514',
         maxTokens: 2000,
       });
@@ -119,21 +187,6 @@ export const socialKeywordGeneratorNode = defineNode({
         },
         allKeywords,
       };
-
-      // Optional: send notification if service available
-      if (context.services?.notifications) {
-        await context.services.notifications.send({
-          userId: context.userId,
-          title: 'Keywords Generated',
-          message: `Generated ${allKeywords.length} keywords for "${input.topic}"`,
-          data: {
-            totalKeywords: allKeywords.length,
-            twitterKeywords: mergedTwitterKeywords.length,
-            redditKeywords: mergedRedditKeywords.length,
-            linkedinKeywords: mergedLinkedInKeywords.length,
-          },
-        });
-      }
 
       return {
         success: true,

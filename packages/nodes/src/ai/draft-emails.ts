@@ -1,4 +1,5 @@
 import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry, sleep } from '../utils/http.js';
 import {
   DraftEmailsInputSchema,
   DraftEmailsOutputSchema,
@@ -11,6 +12,73 @@ import {
   cleanEmailBody,
   cleanSubjectLine,
 } from '../prompts/draft-emails.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
+const ANTHROPIC_VERSION = '2023-06-01';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface AnthropicMessagesResponse {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+}
+
+// =============================================================================
+// API Functions
+// =============================================================================
+
+/**
+ * Generate text using Anthropic Claude API
+ */
+async function generateText(
+  apiKey: string,
+  prompt: string,
+  options: {
+    model?: string;
+    maxTokens?: number;
+  } = {}
+): Promise<string> {
+  const { model = 'claude-sonnet-4-20250514', maxTokens = 1000 } = options;
+
+  const response = await fetchWithRetry(
+    `${ANTHROPIC_API_BASE}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      }),
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 60000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
+  }
+
+  const data: AnthropicMessagesResponse = await response.json();
+  return data.content[0]?.text || '';
+}
 
 // Re-export schemas for convenience
 export {
@@ -28,8 +96,10 @@ export {
  * Draft Emails Node
  *
  * Uses Claude to generate personalized email drafts for each contact.
- * Requires `context.services.anthropic` for AI generation and
- * `context.services.emailDrafts` for storing drafts.
+ * Requires `context.credentials.anthropic.apiKey` to be provided.
+ *
+ * Note: This node generates email content but does NOT store drafts.
+ * Storage is the responsibility of the host application.
  *
  * @example
  * ```typescript
@@ -54,26 +124,12 @@ export const draftEmailsNode = defineNode({
 
   executor: async (input, context) => {
     try {
-      // Require Anthropic service
-      if (!context.services?.anthropic) {
+      // Check for API key
+      const apiKey = context.credentials?.anthropic?.apiKey;
+      if (!apiKey) {
         return {
           success: false,
-          error: 'Anthropic service not configured. Please provide context.services.anthropic.',
-        };
-      }
-
-      // Require email drafts service
-      if (!context.services?.emailDrafts) {
-        return {
-          success: false,
-          error: 'Email drafts service not configured. Please provide context.services.emailDrafts.',
-        };
-      }
-
-      if (!context.campaignId) {
-        return {
-          success: false,
-          error: 'Campaign ID is required in execution context',
+          error: 'Anthropic API key not configured. Please provide context.credentials.anthropic.apiKey.',
         };
       }
 
@@ -82,13 +138,13 @@ export const draftEmailsNode = defineNode({
       if (!senderName) {
         return {
           success: false,
-          error: 'Please set your name in settings before creating email campaigns.',
+          error: 'Please set senderName in context.variables before creating email campaigns.',
         };
       }
 
       const emails: DraftEmailInfo[] = [];
 
-      // Generate and save drafts for each contact
+      // Generate drafts for each contact
       for (const contact of input.contacts) {
         if (!contact.email) {
           continue;
@@ -103,8 +159,7 @@ export const draftEmailsNode = defineNode({
             input.emailTemplate
           );
 
-          const rawBody = await context.services.anthropic.generateText({
-            prompt: emailPrompt,
+          const rawBody = await generateText(apiKey, emailPrompt, {
             model: 'claude-sonnet-4-20250514',
             maxTokens: 250,
           });
@@ -114,8 +169,7 @@ export const draftEmailsNode = defineNode({
 
           // Generate subject line
           const subjectPrompt = buildSubjectPrompt(contact, emailBody);
-          const rawSubject = await context.services.anthropic.generateText({
-            prompt: subjectPrompt,
+          const rawSubject = await generateText(apiKey, subjectPrompt, {
             model: 'claude-sonnet-4-20250514',
             maxTokens: 50,
           });
@@ -123,32 +177,19 @@ export const draftEmailsNode = defineNode({
           // Clean up subject
           const emailSubject = cleanSubjectLine(rawSubject);
 
-          // Save to database via service
-          const savedEmail = await context.services.emailDrafts.createDraft({
-            campaignId: context.campaignId,
-            userId: context.userId,
+          emails.push({
+            id: `draft-${contact.id}-${Date.now()}`,
             toEmail: contact.email,
             toName: contact.name,
-            toCompany: contact.company ?? undefined,
-            toTitle: contact.title ?? undefined,
+            toCompany: contact.company || '',
+            toTitle: contact.title || '',
             subject: emailSubject,
             body: emailBody,
-            contactId: contact.id,
-          });
-
-          emails.push({
-            id: savedEmail.id,
-            toEmail: savedEmail.toEmail,
-            toName: savedEmail.toName || '',
-            toCompany: savedEmail.toCompany || '',
-            toTitle: savedEmail.toTitle || '',
-            subject: savedEmail.subject,
-            body: savedEmail.body,
-            status: savedEmail.status,
+            status: 'draft',
           });
 
           // Small delay between API calls to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await sleep(200);
         } catch {
           // Continue with other contacts even if one fails
         }

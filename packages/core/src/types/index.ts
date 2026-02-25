@@ -1,4 +1,5 @@
 export type {
+  NodeCredentials,
   NodeExecutionContext,
   NodeExecutionResult,
   NodeExecutor,

@@ -2,6 +2,41 @@ import type { z } from 'zod';
 import type { NodeServices } from './services.js';
 
 /**
+ * Credentials for API authentication.
+ * Nodes use these to make direct HTTP calls without requiring injected services.
+ */
+export interface NodeCredentials {
+  /** Apollo.io API credentials */
+  apollo?: {
+    apiKey: string;
+  };
+  /** Twitter/X API credentials */
+  twitter?: {
+    /** Official Twitter API v2 Bearer Token */
+    bearerToken?: string;
+    /** TwitterAPI.io API key (third-party, simpler) */
+    twitterApiIoKey?: string;
+  };
+  /** ForumScout API credentials (for LinkedIn monitoring) */
+  forumScout?: {
+    apiKey: string;
+  };
+  /** DataForSEO API credentials */
+  dataForSeo?: {
+    /** Base64 encoded login:password */
+    apiToken: string;
+  };
+  /** OpenAI API credentials */
+  openai?: {
+    apiKey: string;
+  };
+  /** Anthropic API credentials */
+  anthropic?: {
+    apiKey: string;
+  };
+}
+
+/**
  * Base execution context passed to all node executors.
  * Provides access to workflow state and utilities.
  */
@@ -16,7 +51,12 @@ export interface NodeExecutionContext {
   variables: Record<string, unknown>;
   /** Resolve nested path like "contact.email" or "data[0].name" */
   resolveNestedPath: (path: string) => unknown;
-  /** Optional services injected by host application */
+  /** API credentials for direct HTTP calls */
+  credentials?: NodeCredentials;
+  /**
+   * Optional services injected by host application.
+   * @deprecated Use credentials instead for standalone operation.
+   */
   services?: NodeServices;
 }
 

@@ -1,9 +1,49 @@
 import { z } from 'zod';
-import { defineNode, type LinkedInPost as ServiceLinkedInPost } from '@jam-nodes/core';
+import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../../utils/http.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const FORUMSCOUT_BASE_URL = 'https://forumscout.app/api';
 
 // =============================================================================
 // Types
 // =============================================================================
+
+/**
+ * ForumScout LinkedIn post response format
+ */
+interface ForumScoutLinkedInPost {
+  author?: string;
+  date?: string;
+  domain?: string;
+  snippet?: string;
+  source?: string;
+  title?: string;
+  url?: string;
+  text?: string;
+  content?: string;
+  authorName?: string;
+  authorUrl?: string;
+  authorProfileUrl?: string;
+  authorHeadline?: string;
+  authorFollowers?: number;
+  likes?: number;
+  numLikes?: number;
+  comments?: number;
+  numComments?: number;
+  shares?: number;
+  numShares?: number;
+  reactions?: number;
+  postedAt?: string;
+  datePosted?: string;
+  postedDate?: string;
+  hashtags?: string[];
+  id?: string;
+  urn?: string;
+}
 
 /**
  * LinkedIn post in unified social format
@@ -106,6 +146,49 @@ function extractHandleFromUrl(url: string | undefined): string {
   }
 }
 
+/**
+ * Search LinkedIn using ForumScout API
+ */
+async function searchLinkedIn(
+  apiKey: string,
+  keyword: string,
+  options: {
+    sortBy?: 'relevance' | 'date_posted';
+    page?: number;
+  } = {}
+): Promise<ForumScoutLinkedInPost[]> {
+  const url = new URL(`${FORUMSCOUT_BASE_URL}/linkedin_search`);
+  url.searchParams.set('keyword', keyword);
+  url.searchParams.set('sort_by', options.sortBy || 'date_posted');
+  if (options.page) {
+    url.searchParams.set('page', options.page.toString());
+  }
+
+  const response = await fetchWithRetry(
+    url.toString(),
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey,
+        'Content-Type': 'application/json',
+      },
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 60000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`ForumScout API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+
+  // ForumScout returns a raw array or wrapped in posts/results/data
+  return Array.isArray(data)
+    ? data
+    : (data.posts || data.results || data.data || []);
+}
+
 // =============================================================================
 // Node Definition
 // =============================================================================
@@ -114,7 +197,7 @@ function extractHandleFromUrl(url: string | undefined): string {
  * LinkedIn Monitor Node
  *
  * Searches LinkedIn for posts matching keywords using ForumScout API.
- * Requires `context.services.forumScout` to be provided by the host application.
+ * Requires `context.credentials.forumScout.apiKey` to be provided.
  *
  * @example
  * ```typescript
@@ -147,50 +230,51 @@ export const linkedinMonitorNode = defineNode({
         };
       }
 
-      // Require ForumScout service
-      if (!context.services?.forumScout) {
+      // Check for API key
+      const apiKey = context.credentials?.forumScout?.apiKey;
+      if (!apiKey) {
         return {
           success: false,
-          error: 'ForumScout service not configured. Please provide context.services.forumScout.',
+          error: 'ForumScout API key not configured. Please provide context.credentials.forumScout.apiKey.',
         };
       }
 
-      // Search LinkedIn via ForumScout
-      const results = await context.services.forumScout.searchLinkedIn(keywords, {
-        maxResults: input.maxResults || 50,
-        timeFilter: input.timeFilter,
+      // Search LinkedIn with combined keywords
+      const searchKeyword = keywords.join(' ');
+      const results = await searchLinkedIn(apiKey, searchKeyword, {
+        sortBy: 'date_posted',
       });
 
       // Transform to unified format
-      const posts: LinkedInPost[] = results.map((post: ServiceLinkedInPost) => ({
-        id: post.id,
-        platform: 'linkedin' as const,
-        url: post.url,
-        text: post.text,
-        authorName: post.authorName,
-        authorHandle: extractHandleFromUrl(post.authorUrl),
-        authorUrl: post.authorUrl || '',
-        // ForumScout may not always return follower data
-        authorFollowers: post.authorFollowers || 0,
-        authorHeadline: post.authorHeadline,
-        engagement: {
-          likes: post.likes || 0,
-          comments: post.comments || 0,
-          shares: post.shares || 0,
-        },
-        hashtags: post.hashtags || extractHashtags(post.text),
-        postedAt: post.createdAt,
-      }));
+      const posts: LinkedInPost[] = results
+        .slice(0, input.maxResults || 50)
+        .map((post, index) => {
+          const postId = post.id || post.urn || `linkedin-${index}-${Date.now()}`;
+          const postUrl = post.url || '';
+          const postText = post.text || post.content || post.snippet || '';
+          const authorName = post.authorName || post.author || 'Unknown';
+          const authorUrl = post.authorUrl || post.authorProfileUrl || '';
+          const postedAt = post.postedAt || post.datePosted || post.postedDate || post.date || new Date().toISOString();
 
-      // Optional: send notification if service available
-      if (context.services?.notifications && posts.length > 0) {
-        await context.services.notifications.send({
-          userId: context.userId,
-          title: 'LinkedIn Monitor Complete',
-          message: `Found ${posts.length} LinkedIn posts`,
-          data: { posts: posts.slice(0, 5) },
+          return {
+            id: postId,
+            platform: 'linkedin' as const,
+            url: postUrl,
+            text: postText,
+            authorName,
+            authorHandle: extractHandleFromUrl(authorUrl),
+            authorUrl,
+            authorFollowers: post.authorFollowers || 0,
+            authorHeadline: post.authorHeadline,
+            engagement: {
+              likes: post.likes || post.numLikes || post.reactions || 0,
+              comments: post.comments || post.numComments || 0,
+              shares: post.shares || post.numShares || 0,
+            },
+            hashtags: post.hashtags || extractHashtags(postText),
+            postedAt,
+          };
         });
-      }
 
       return {
         success: true,

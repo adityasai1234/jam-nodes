@@ -1,7 +1,11 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { createRegistry, type NodeExecutionContext } from '@jam-nodes/core';
+import dotenv from 'dotenv';
+import { createRegistry, type NodeExecutionContext, type NodeCredentials } from '@jam-nodes/core';
+
+// Load environment variables from .env file
+dotenv.config();
 import { builtInNodes } from '@jam-nodes/nodes';
 import {
   getCredentials,
@@ -24,19 +28,19 @@ for (const node of builtInNodes) {
 }
 
 /**
- * Service names required by each node type
+ * Credential requirements for each node type
  */
-const NODE_SERVICE_REQUIREMENTS: Record<string, string[]> = {
-  search_contacts: ['apollo'],
-  reddit_monitor: ['forumScout'],
-  twitter_monitor: ['twitter'],
-  linkedin_monitor: ['forumScout'],
-  sora_video: ['openai'],
-  seo_keyword_research: ['dataForSeo'],
-  seo_audit: ['dataForSeo'],
-  social_keyword_generator: ['anthropic'],
-  draft_emails: ['anthropic'],
-  social_ai_analyze: ['anthropic'],
+const NODE_CREDENTIAL_REQUIREMENTS: Record<string, { service: string; fields: { name: string; envVar: string }[] }[]> = {
+  search_contacts: [{ service: 'apollo', fields: [{ name: 'apiKey', envVar: 'APOLLO_API_KEY' }] }],
+  reddit_monitor: [], // No credentials required - uses public API
+  twitter_monitor: [{ service: 'twitter', fields: [{ name: 'twitterApiIoKey', envVar: 'TWITTERAPI_IO_KEY' }] }],
+  linkedin_monitor: [{ service: 'forumScout', fields: [{ name: 'apiKey', envVar: 'FORUMSCOUT_API_KEY' }] }],
+  sora_video: [{ service: 'openai', fields: [{ name: 'apiKey', envVar: 'OPENAI_API_KEY' }] }],
+  seo_keyword_research: [{ service: 'dataForSeo', fields: [{ name: 'apiToken', envVar: 'DATAFORSEO_API_TOKEN' }] }],
+  seo_audit: [{ service: 'dataForSeo', fields: [{ name: 'apiToken', envVar: 'DATAFORSEO_API_TOKEN' }] }],
+  social_keyword_generator: [{ service: 'anthropic', fields: [{ name: 'apiKey', envVar: 'ANTHROPIC_API_KEY' }] }],
+  draft_emails: [{ service: 'anthropic', fields: [{ name: 'apiKey', envVar: 'ANTHROPIC_API_KEY' }] }],
+  social_ai_analyze: [{ service: 'anthropic', fields: [{ name: 'apiKey', envVar: 'ANTHROPIC_API_KEY' }] }],
 };
 
 /**
@@ -77,38 +81,62 @@ export const runCommand = new Command('run')
         console.log(chalk.yellow('⚡ Mock mode enabled - returning sample data without API calls'));
       }
 
-      // Check for required services/credentials
-      const requiredServices = NODE_SERVICE_REQUIREMENTS[nodeType] || [];
-      const credentials: Record<string, Record<string, string>> = {};
+      // Check for required credentials
+      const credentialRequirements = NODE_CREDENTIAL_REQUIREMENTS[nodeType] || [];
+      const nodeCredentials: NodeCredentials = {};
 
-      if (requiredServices.length > 0 && !options.mock) {
+      if (credentialRequirements.length > 0 && !options.mock) {
         console.log();
-        console.log(chalk.dim(`This node requires: ${requiredServices.join(', ')}`));
+        const serviceNames = credentialRequirements.map(r => r.service).join(', ');
+        console.log(chalk.dim(`This node requires: ${serviceNames}`));
 
-        for (const service of requiredServices) {
+        for (const requirement of credentialRequirements) {
+          const { service, fields } = requirement;
           const source = await getCredentialSource(service);
 
           if (source) {
             console.log(chalk.green(`✓ ${service} credentials found (${source})`));
             const creds = await getCredentials(service);
             if (creds) {
-              credentials[service] = creds;
+              // Map stored credentials to NodeCredentials format
+              (nodeCredentials as Record<string, Record<string, string>>)[service] = creds;
             }
           } else {
-            console.log(chalk.yellow(`⚠ ${service} credentials not found`));
+            // Check environment variables first
+            let foundInEnv = true;
+            const envCreds: Record<string, string> = {};
 
-            // Prompt for credentials
-            const creds = await promptForCredentials(service, [
-              { name: 'apiKey', message: `${service} API Key:`, type: 'password' },
-            ]);
+            for (const field of fields) {
+              const envValue = process.env[field.envVar];
+              if (envValue) {
+                envCreds[field.name] = envValue;
+                console.log(chalk.green(`✓ ${service}.${field.name} found in env (${field.envVar})`));
+              } else {
+                foundInEnv = false;
+              }
+            }
 
-            credentials[service] = creds;
+            if (foundInEnv) {
+              (nodeCredentials as Record<string, Record<string, string>>)[service] = envCreds;
+            } else {
+              console.log(chalk.yellow(`⚠ ${service} credentials not found`));
 
-            // Ask if they want to save
-            const shouldSave = await promptSaveCredentials();
-            if (shouldSave) {
-              saveCredentials(service, creds);
-              console.log(chalk.green(`✓ ${service} credentials saved`));
+              // Prompt for credentials
+              const promptFields = fields.map(f => ({
+                name: f.name,
+                message: `${service} ${f.name} (or set ${f.envVar}):`,
+                type: 'password' as const,
+              }));
+              const creds = await promptForCredentials(service, promptFields);
+
+              (nodeCredentials as Record<string, Record<string, string>>)[service] = creds;
+
+              // Ask if they want to save
+              const shouldSave = await promptSaveCredentials();
+              if (shouldSave) {
+                saveCredentials(service, creds);
+                console.log(chalk.green(`✓ ${service} credentials saved`));
+              }
             }
           }
         }
@@ -151,7 +179,7 @@ export const runCommand = new Command('run')
             output: generateMockOutput(nodeType, definition.outputSchema),
           };
         } else {
-          // Create execution context
+          // Create execution context with credentials (not services)
           const context: NodeExecutionContext = {
             userId: 'playground',
             workflowExecutionId: `playground_${Date.now()}`,
@@ -169,7 +197,7 @@ export const runCommand = new Command('run')
               }
               return current;
             },
-            services: createMockServices(credentials),
+            credentials: nodeCredentials,
           };
 
           // Validate input
@@ -221,53 +249,3 @@ function formatJson(data: unknown): string {
     .replace(/: (null)/g, ': ' + chalk.dim('$1'));
 }
 
-/**
- * Create mock service implementations that use credentials
- */
-function createMockServices(
-  credentials: Record<string, Record<string, string>>
-): Record<string, unknown> {
-  // These are placeholder services that would need real implementations
-  // For playground purposes, they demonstrate the service injection pattern
-  return {
-    apollo: credentials['apollo']
-      ? {
-          searchContacts: async () => {
-            console.log(chalk.dim('Apollo API call would happen here...'));
-            return [];
-          },
-          enrichContact: async () => {
-            return null;
-          },
-        }
-      : undefined,
-    forumScout: credentials['forumScout']
-      ? {
-          searchReddit: async () => [],
-          searchLinkedIn: async () => [],
-        }
-      : undefined,
-    twitter: credentials['twitter']
-      ? {
-          search: async () => [],
-        }
-      : undefined,
-    openai: credentials['openai']
-      ? {
-          generateVideo: async () => ({ url: 'mock_url' }),
-        }
-      : undefined,
-    anthropic: credentials['anthropic']
-      ? {
-          complete: async () => 'mock response',
-          generateKeywords: async () => ['keyword1', 'keyword2'],
-        }
-      : undefined,
-    dataForSeo: credentials['dataForSeo']
-      ? {
-          getKeywords: async () => [],
-          runAudit: async () => ({ issues: [] }),
-        }
-      : undefined,
-  };
-}

@@ -1,9 +1,55 @@
 import { z } from 'zod';
-import { defineNode, type TwitterPost as ServiceTwitterPost } from '@jam-nodes/core';
+import { defineNode } from '@jam-nodes/core';
+import { fetchWithRetry } from '../../utils/http.js';
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const TWITTERAPI_BASE_URL = 'https://api.twitterapi.io';
 
 // =============================================================================
 // Types
 // =============================================================================
+
+/**
+ * TwitterAPI.io tweet response format
+ */
+interface TwitterApiTweet {
+  id: string;
+  url: string;
+  text: string;
+  source: string;
+  retweetCount: number;
+  replyCount: number;
+  likeCount: number;
+  quoteCount: number;
+  viewCount: number;
+  createdAt: string;
+  lang: string;
+  bookmarkCount: number;
+  isReply: boolean;
+  author: {
+    id: string;
+    userName: string;
+    name: string;
+    profileImageUrl: string;
+    followers: number;
+    following: number;
+    isVerified: boolean;
+  };
+  entities: {
+    hashtags: string[];
+    mentions: { userName: string; id: string }[];
+    urls: { url: string; expandedUrl: string }[];
+  };
+}
+
+interface TwitterApiSearchResponse {
+  tweets: TwitterApiTweet[];
+  has_next_page: boolean;
+  next_cursor: string;
+}
 
 /**
  * Twitter/X post in unified social format
@@ -114,6 +160,37 @@ function buildTwitterSearchQuery(
   return query;
 }
 
+/**
+ * Search Twitter using TwitterAPI.io
+ */
+async function searchTwitter(
+  apiKey: string,
+  query: string,
+  queryType: 'Latest' | 'Top' = 'Latest'
+): Promise<TwitterApiSearchResponse> {
+  const url = new URL(`${TWITTERAPI_BASE_URL}/twitter/tweet/advanced_search`);
+  url.searchParams.set('query', query);
+  url.searchParams.set('queryType', queryType);
+
+  const response = await fetchWithRetry(
+    url.toString(),
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey,
+      },
+    },
+    { maxRetries: 3, backoffMs: 1000, timeoutMs: 30000 }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Twitter API error: ${response.status} - ${errorText}`);
+  }
+
+  return response.json() as Promise<TwitterApiSearchResponse>;
+}
+
 // =============================================================================
 // Node Definition
 // =============================================================================
@@ -121,8 +198,8 @@ function buildTwitterSearchQuery(
 /**
  * Twitter Monitor Node
  *
- * Searches Twitter/X for posts matching keywords.
- * Requires `context.services.twitter` to be provided by the host application.
+ * Searches Twitter/X for posts matching keywords using TwitterAPI.io.
+ * Requires `context.credentials.twitter.twitterApiIoKey` to be provided.
  *
  * @example
  * ```typescript
@@ -155,11 +232,12 @@ export const twitterMonitorNode = defineNode({
         };
       }
 
-      // Require Twitter service
-      if (!context.services?.twitter) {
+      // Check for API key (prefer TwitterAPI.io key)
+      const apiKey = context.credentials?.twitter?.twitterApiIoKey;
+      if (!apiKey) {
         return {
           success: false,
-          error: 'Twitter service not configured. Please provide context.services.twitter.',
+          error: 'Twitter API key not configured. Please provide context.credentials.twitter.twitterApiIoKey.',
         };
       }
 
@@ -178,46 +256,36 @@ export const twitterMonitorNode = defineNode({
       });
 
       // Search tweets
-      const tweets = await context.services.twitter.searchTweets(query, {
-        maxResults: input.maxResults || 50,
-        sinceDays: input.sinceDays,
-      });
+      const response = await searchTwitter(apiKey, query, 'Latest');
 
       // Transform to unified format
-      const posts: TwitterPost[] = tweets.map((tweet: ServiceTwitterPost) => ({
-        id: tweet.id,
-        platform: 'twitter' as const,
-        url: tweet.url,
-        text: tweet.text,
-        authorName: tweet.authorName,
-        authorHandle: tweet.authorHandle,
-        authorUrl: `https://twitter.com/${tweet.authorHandle}`,
-        authorFollowers: tweet.authorFollowers,
-        engagement: {
-          likes: tweet.likes,
-          comments: tweet.replies,
-          shares: tweet.retweets,
-          views: tweet.views || 0,
-        },
-        postedAt: tweet.createdAt,
-      }));
-
-      // Optional: send notification if service available
-      if (context.services?.notifications && posts.length > 0) {
-        await context.services.notifications.send({
-          userId: context.userId,
-          title: 'Twitter Monitor Complete',
-          message: `Found ${posts.length} tweets`,
-          data: { posts: posts.slice(0, 5) },
-        });
-      }
+      const posts: TwitterPost[] = (response.tweets || [])
+        .slice(0, input.maxResults || 50)
+        .map((tweet) => ({
+          id: tweet.id,
+          platform: 'twitter' as const,
+          url: tweet.url,
+          text: tweet.text,
+          authorName: tweet.author.name,
+          authorHandle: tweet.author.userName,
+          authorUrl: `https://twitter.com/${tweet.author.userName}`,
+          authorFollowers: tweet.author.followers,
+          engagement: {
+            likes: tweet.likeCount,
+            comments: tweet.replyCount,
+            shares: tweet.retweetCount,
+            views: tweet.viewCount || 0,
+          },
+          postedAt: tweet.createdAt,
+        }));
 
       return {
         success: true,
         output: {
           posts,
           totalFound: posts.length,
-          hasMore: false, // Simplified - pagination handled by service
+          hasMore: response.has_next_page,
+          cursor: response.next_cursor || undefined,
         },
       };
     } catch (error) {
