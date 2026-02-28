@@ -5,3 +5,8 @@ export {
   FetchRetryError,
   type FetchWithRetryOptions,
 } from './http.js';
+
+export {
+  generateAnthropicText,
+  type AnthropicGenerateOptions,
+} from './anthropic.js';
