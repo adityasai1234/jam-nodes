@@ -6,7 +6,4 @@ export {
   type FetchWithRetryOptions,
 } from './http.js';
 
-export {
-  generateAnthropicText,
-  type AnthropicGenerateOptions,
-} from './anthropic.js';
+export { resolvePath } from './resolve-path.js';
