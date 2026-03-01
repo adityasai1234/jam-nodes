@@ -92,10 +92,13 @@ export {
   seoAuditNode,
   SeoAuditInputSchema,
   SeoAuditOutputSchema,
-  // Apollo
   searchContactsNode,
   SearchContactsInputSchema,
   SearchContactsOutputSchema,
+  // Dev.to
+  devtoNode,
+  DevToInputSchema,
+  DevToOutputSchema,
 } from './integrations/index.js';
 
 export type {
@@ -117,6 +120,9 @@ export type {
   SeoIssue,
   SearchContactsInput,
   SearchContactsOutput,
+  DevToInput,
+  DevToOutput,
+  DevToArticle,
 } from './integrations/index.js';
 
 // AI nodes
@@ -161,6 +167,7 @@ import {
   seoKeywordResearchNode,
   seoAuditNode,
   searchContactsNode,
+  devtoNode,
 } from './integrations/index.js';
 import {
   socialKeywordGeneratorNode,
@@ -191,6 +198,7 @@ export const builtInNodes = [
   seoKeywordResearchNode,
   seoAuditNode,
   searchContactsNode,
+  devtoNode,
   // AI
   socialKeywordGeneratorNode,
   draftEmailsNode,
