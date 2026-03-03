@@ -51,6 +51,83 @@ const NODE_CREDENTIAL_REQUIREMENTS: Record<
       fields: [{ name: 'twitterApiIoKey', envVar: 'TWITTERAPI_IO_KEY' }],
     },
   ],
+  twitter_create_tweet: [
+    {
+      service: 'twitter',
+      fields: [
+        { name: 'consumerKey', envVar: 'TWITTER_CONSUMER_KEY' },
+        { name: 'consumerSecret', envVar: 'TWITTER_CONSUMER_SECRET' },
+        { name: 'accessToken', envVar: 'TWITTER_ACCESS_TOKEN' },
+        { name: 'accessTokenSecret', envVar: 'TWITTER_ACCESS_TOKEN_SECRET' },
+      ],
+    },
+  ],
+  twitter_delete_tweet: [
+    {
+      service: 'twitter',
+      fields: [
+        { name: 'consumerKey', envVar: 'TWITTER_CONSUMER_KEY' },
+        { name: 'consumerSecret', envVar: 'TWITTER_CONSUMER_SECRET' },
+        { name: 'accessToken', envVar: 'TWITTER_ACCESS_TOKEN' },
+        { name: 'accessTokenSecret', envVar: 'TWITTER_ACCESS_TOKEN_SECRET' },
+      ],
+    },
+  ],
+  twitter_like_tweet: [
+    {
+      service: 'twitter',
+      fields: [
+        { name: 'consumerKey', envVar: 'TWITTER_CONSUMER_KEY' },
+        { name: 'consumerSecret', envVar: 'TWITTER_CONSUMER_SECRET' },
+        { name: 'accessToken', envVar: 'TWITTER_ACCESS_TOKEN' },
+        { name: 'accessTokenSecret', envVar: 'TWITTER_ACCESS_TOKEN_SECRET' },
+      ],
+    },
+  ],
+  twitter_retweet: [
+    {
+      service: 'twitter',
+      fields: [
+        { name: 'consumerKey', envVar: 'TWITTER_CONSUMER_KEY' },
+        { name: 'consumerSecret', envVar: 'TWITTER_CONSUMER_SECRET' },
+        { name: 'accessToken', envVar: 'TWITTER_ACCESS_TOKEN' },
+        { name: 'accessTokenSecret', envVar: 'TWITTER_ACCESS_TOKEN_SECRET' },
+      ],
+    },
+  ],
+  twitter_search_tweets: [
+    {
+      service: 'twitter',
+      fields: [
+        { name: 'consumerKey', envVar: 'TWITTER_CONSUMER_KEY' },
+        { name: 'consumerSecret', envVar: 'TWITTER_CONSUMER_SECRET' },
+        { name: 'accessToken', envVar: 'TWITTER_ACCESS_TOKEN' },
+        { name: 'accessTokenSecret', envVar: 'TWITTER_ACCESS_TOKEN_SECRET' },
+      ],
+    },
+  ],
+  twitter_send_dm: [
+    {
+      service: 'twitter',
+      fields: [
+        { name: 'consumerKey', envVar: 'TWITTER_CONSUMER_KEY' },
+        { name: 'consumerSecret', envVar: 'TWITTER_CONSUMER_SECRET' },
+        { name: 'accessToken', envVar: 'TWITTER_ACCESS_TOKEN' },
+        { name: 'accessTokenSecret', envVar: 'TWITTER_ACCESS_TOKEN_SECRET' },
+      ],
+    },
+  ],
+  twitter_get_user_by_username: [
+    {
+      service: 'twitter',
+      fields: [
+        { name: 'consumerKey', envVar: 'TWITTER_CONSUMER_KEY' },
+        { name: 'consumerSecret', envVar: 'TWITTER_CONSUMER_SECRET' },
+        { name: 'accessToken', envVar: 'TWITTER_ACCESS_TOKEN' },
+        { name: 'accessTokenSecret', envVar: 'TWITTER_ACCESS_TOKEN_SECRET' },
+      ],
+    },
+  ],
   linkedin_monitor: [
     {
       service: 'forumScout',
