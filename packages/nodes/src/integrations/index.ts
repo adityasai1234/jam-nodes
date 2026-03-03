@@ -117,3 +117,33 @@ export {
   type DevtoGetArticlesInput,
   type DevtoGetArticlesOutput,
 } from './devto/index.js'
+
+// WordPress integrations
+export {
+  wordpressCreatePostNode,
+  wordpressUpdatePostNode,
+  wordpressGetPostsNode,
+  wordpressUploadMediaNode,
+  WordPressCredential,
+  WordPressPostSchema,
+  WordPressCreatePostInputSchema,
+  WordPressCreatePostOutputSchema,
+  WordPressUpdatePostInputSchema,
+  WordPressUpdatePostOutputSchema,
+  WordPressGetPostsInputSchema,
+  WordPressGetPostsOutputSchema,
+  WordPressMediaSchema,
+  WordPressUploadMediaInputSchema,
+  WordPressUploadMediaOutputSchema,
+  normalizeWordPressPost,
+  type WordPressPost,
+  type WordPressCreatePostInput,
+  type WordPressCreatePostOutput,
+  type WordPressUpdatePostInput,
+  type WordPressUpdatePostOutput,
+  type WordPressGetPostsInput,
+  type WordPressGetPostsOutput,
+  type WordPressMedia,
+  type WordPressUploadMediaInput,
+  type WordPressUploadMediaOutput,
+} from './wordpress/index.js'

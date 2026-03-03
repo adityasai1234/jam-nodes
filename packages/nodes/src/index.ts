@@ -131,6 +131,22 @@ export {
   DevtoGetArticlesInputSchema,
   DevtoGetArticlesOutputSchema,
   devtoCredential,
+  // WordPress
+  wordpressCreatePostNode,
+  WordPressCreatePostInputSchema,
+  WordPressCreatePostOutputSchema,
+  wordpressUpdatePostNode,
+  WordPressUpdatePostInputSchema,
+  WordPressUpdatePostOutputSchema,
+  wordpressGetPostsNode,
+  WordPressGetPostsInputSchema,
+  WordPressGetPostsOutputSchema,
+  wordpressUploadMediaNode,
+  WordPressUploadMediaInputSchema,
+  WordPressUploadMediaOutputSchema,
+  WordPressPostSchema,
+  WordPressMediaSchema,
+  WordPressCredential,
 } from './integrations/index.js'
 
 export type {
@@ -172,6 +188,16 @@ export type {
   DevtoUpdateArticleOutput,
   DevtoGetArticlesInput,
   DevtoGetArticlesOutput,
+  WordPressPost,
+  WordPressCreatePostInput,
+  WordPressCreatePostOutput,
+  WordPressUpdatePostInput,
+  WordPressUpdatePostOutput,
+  WordPressGetPostsInput,
+  WordPressGetPostsOutput,
+  WordPressMedia,
+  WordPressUploadMediaInput,
+  WordPressUploadMediaOutput,
 } from './integrations/index.js'
 
 // AI nodes
@@ -225,6 +251,10 @@ import {
   devtoCreateArticleNode,
   devtoUpdateArticleNode,
   devtoGetArticlesNode,
+  wordpressCreatePostNode,
+  wordpressUpdatePostNode,
+  wordpressGetPostsNode,
+  wordpressUploadMediaNode,
 } from './integrations/index.js'
 import {
   socialKeywordGeneratorNode,
@@ -264,6 +294,10 @@ export const builtInNodes = [
   devtoCreateArticleNode,
   devtoUpdateArticleNode,
   devtoGetArticlesNode,
+  wordpressCreatePostNode,
+  wordpressUpdatePostNode,
+  wordpressGetPostsNode,
+  wordpressUploadMediaNode,
   // AI
   socialKeywordGeneratorNode,
   draftEmailsNode,

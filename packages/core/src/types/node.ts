@@ -50,6 +50,12 @@ export interface NodeCredentials {
   devto?: {
     apiKey: string
   }
+  /** WordPress Application Password credentials */
+  wordpress?: {
+    siteUrl: string
+    username: string
+    applicationPassword: string
+  }
 }
 
 /**
