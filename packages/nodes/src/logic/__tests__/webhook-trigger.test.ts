@@ -449,6 +449,8 @@ describe('webhookTriggerNode - output schema', () => {
       query: {},
       timestamp: new Date().toISOString(),
       authenticated: true,
+      responseCode: 200,
+      responseData: { status: 'ok' },
     })
     expect(result.success).toBe(true)
   })
@@ -461,8 +463,65 @@ describe('webhookTriggerNode - output schema', () => {
       path: '/hook',
       query: {},
       timestamp: new Date().toISOString(),
+      responseCode: 200,
       // authenticated is missing
     })
     expect(result.success).toBe(false)
+  })
+
+  it('should reject output missing responseCode field', () => {
+    const result = WebhookTriggerOutputSchema.safeParse({
+      body: null,
+      headers: {},
+      method: 'POST',
+      path: '/hook',
+      query: {},
+      timestamp: new Date().toISOString(),
+      authenticated: true,
+      // responseCode is missing
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should include responseCode and responseData in executor output', async () => {
+    const context = makeContext({
+      method: 'POST',
+      path: '/hook',
+      headers: {},
+      body: null,
+      query: {},
+    })
+    const result = await webhookTriggerNode.executor(
+      {
+        path: '/hook',
+        method: 'POST',
+        responseCode: 201,
+        responseData: { received: true },
+      },
+      context as never,
+    )
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.output.responseCode).toBe(201)
+      expect(result.output.responseData).toEqual({ received: true })
+    }
+  })
+
+  it('should default responseCode to 200 when not configured', async () => {
+    const context = makeContext({
+      method: 'POST',
+      path: '/hook',
+      headers: {},
+      body: null,
+      query: {},
+    })
+    const result = await webhookTriggerNode.executor(
+      { path: '/hook', method: 'POST' },
+      context as never,
+    )
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.output.responseCode).toBe(200)
+    }
   })
 })

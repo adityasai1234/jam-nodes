@@ -30,6 +30,8 @@ export const WebhookTriggerOutputSchema = z.object({
   query: z.record(z.string()),
   timestamp: z.string(),
   authenticated: z.boolean(),
+  responseCode: z.number().int().min(100).max(599),
+  responseData: z.unknown().optional(),
 })
 
 export type WebhookTriggerOutput = z.infer<typeof WebhookTriggerOutputSchema>
@@ -169,6 +171,8 @@ export const webhookTriggerNode = defineNode({
           query: webhookRequest.query ?? {},
           timestamp: new Date().toISOString(),
           authenticated,
+          responseCode: input.responseCode ?? 200,
+          responseData: input.responseData,
         },
       }
     } catch (error) {
