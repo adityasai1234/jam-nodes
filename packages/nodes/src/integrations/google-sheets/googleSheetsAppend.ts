@@ -1,7 +1,7 @@
 import { defineNode } from '@jam-nodes/core';
-import { fetchWithRetry } from '../../utils/http';
-import { appendInputSchema, appendOutputSchema } from './schemas';
-import type { AppendInput, AppendOutput } from './types';
+import { fetchWithRetry } from '../../utils/http.js';
+import { appendInputSchema, appendOutputSchema } from './schemas.js';
+import type { AppendInput, AppendOutput } from './types.js';
 
 export const googleSheetsAppendNode = defineNode<AppendInput, AppendOutput>({
   type: 'googleSheetsAppend',

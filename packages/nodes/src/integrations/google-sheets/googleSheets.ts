@@ -1,4 +1,4 @@
-import { defineOAuth2Credential } from '../types/credentials';
+import { defineOAuth2Credential } from '../types/credentials.js';
 import { z } from 'zod';
 
 export const GoogleSheetsCredential = defineOAuth2Credential({
