@@ -64,6 +64,13 @@ export const NODE_SERVICE_REQUIREMENTS: Record<string, string[]> = {
   search_contacts: ['apollo'],
   reddit_monitor: ['forumScout'],
   twitter_monitor: ['twitter'],
+  twitter_create_tweet: ['twitter'],
+  twitter_delete_tweet: ['twitter'],
+  twitter_like_tweet: ['twitter'],
+  twitter_retweet: ['twitter'],
+  twitter_search_tweets: ['twitter'],
+  twitter_send_dm: ['twitter'],
+  twitter_get_user_by_username: ['twitter'],
   linkedin_monitor: ['forumScout'],
   sora_video: ['openai'],
   seo_keyword_research: ['dataForSeo'],
@@ -71,6 +78,12 @@ export const NODE_SERVICE_REQUIREMENTS: Record<string, string[]> = {
   social_keyword_generator: ['anthropic'],
   draft_emails: ['anthropic'],
   social_ai_analyze: ['anthropic'],
+  discord_send_message: ['discordBot'],
+  discord_send_webhook: ['discordWebhook'],
+  discord_create_thread: ['discordBot'],
+  firecrawl_scrape: ['firecrawl'],
+  firecrawl_crawl: ['firecrawl'],
+  firecrawl_extract: ['firecrawl'],
 };
 
 /**
