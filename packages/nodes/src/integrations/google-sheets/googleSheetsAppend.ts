@@ -7,7 +7,6 @@ export const googleSheetsAppendNode = defineNode<AppendInput, AppendOutput>({
   type: 'googleSheetsAppend',
   name: 'Append to Google Sheet',
   description: 'Add rows to the bottom of a sheet',
-  credentialType: 'googleSheets',
 
   inputSchema: appendInputSchema,
   outputSchema: appendOutputSchema,

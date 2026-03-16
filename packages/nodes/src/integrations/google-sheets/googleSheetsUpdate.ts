@@ -7,7 +7,7 @@ export const googleSheetsUpdateNode = defineNode<UpdateInput, UpdateOutput>({
     type: 'googleSheetsUpdate',
     name: 'Update Google Sheet',
     description: 'Update a row in a sheet',
-    credentialType: 'googleSheets',
+
 
     inputSchema: updateInputSchema,
     outputSchema: updateOutputSchema,
