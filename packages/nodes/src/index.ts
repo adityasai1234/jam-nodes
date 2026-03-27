@@ -193,6 +193,19 @@ export {
   WordPressPostSchema,
   WordPressMediaSchema,
   WordPressCredential,
+  // Google Sheets
+  googleSheetsAppendNode,
+  googleSheetsClearNode,
+  googleSheetsReadNode,
+  googleSheetsUpdateNode,
+  appendInputSchema,
+  appendOutputSchema,
+  clearInputSchema,
+  clearOutputSchema,
+  readInputSchema,
+  readOutputSchema,
+  updateInputSchema,
+  updateOutputSchema,
 } from './integrations/index.js'
 
 export type {
@@ -264,6 +277,15 @@ export type {
   WordPressMedia,
   WordPressUploadMediaInput,
   WordPressUploadMediaOutput,
+  // Google Sheets
+  AppendInput,
+  AppendOutput,
+  ClearInput,
+  ClearOutput,
+  ReadInput,
+  ReadOutput,
+  UpdateInput,
+  UpdateOutput,
 } from './integrations/index.js'
 
 // AI nodes
@@ -334,6 +356,10 @@ import {
   wordpressUpdatePostNode,
   wordpressGetPostsNode,
   wordpressUploadMediaNode,
+  googleSheetsAppendNode,
+  googleSheetsClearNode,
+  googleSheetsReadNode,
+  googleSheetsUpdateNode,
 } from './integrations/index.js'
 import {
   socialKeywordGeneratorNode,
@@ -390,6 +416,11 @@ export const builtInNodes = [
   wordpressUpdatePostNode,
   wordpressGetPostsNode,
   wordpressUploadMediaNode,
+  // Google Sheets
+  googleSheetsAppendNode,
+  googleSheetsClearNode,
+  googleSheetsReadNode,
+  googleSheetsUpdateNode,
   // AI
   socialKeywordGeneratorNode,
   draftEmailsNode,
