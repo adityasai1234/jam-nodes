@@ -3,6 +3,7 @@ export {
   conditionalNode,
   endNode,
   delayNode,
+  loopNode,
   ConditionalInputSchema,
   ConditionalOutputSchema,
   ConditionSchema,
@@ -11,7 +12,9 @@ export {
   EndOutputSchema,
   DelayInputSchema,
   DelayOutputSchema,
-} from './logic/index.js';
+  LoopInputSchema,
+  LoopOutputSchema,
+} from './logic/index.js'
 
 export type {
   ConditionalInput,
@@ -22,7 +25,9 @@ export type {
   EndOutput,
   DelayInput,
   DelayOutput,
-} from './logic/index.js';
+  LoopInput,
+  LoopOutput,
+} from './logic/index.js'
 
 // Transform nodes
 export {
@@ -37,7 +42,7 @@ export {
   SortInputSchema,
   SortOutputSchema,
   SortDirectionSchema,
-} from './transform/index.js';
+} from './transform/index.js'
 
 export type {
   MapInput,
@@ -48,7 +53,7 @@ export type {
   SortInput,
   SortOutput,
   SortDirection,
-} from './transform/index.js';
+} from './transform/index.js'
 
 // Example nodes
 export {
@@ -59,7 +64,7 @@ export {
   breadNode,
   BreadInputSchema,
   BreadOutputSchema,
-} from './examples/index.js';
+} from './examples/index.js'
 
 export type {
   HttpRequestInput,
@@ -67,7 +72,7 @@ export type {
   HttpMethod,
   BreadInput,
   BreadOutput,
-} from './examples/index.js';
+} from './examples/index.js'
 
 // Integration nodes
 export {
@@ -78,6 +83,28 @@ export {
   twitterMonitorNode,
   TwitterMonitorInputSchema,
   TwitterMonitorOutputSchema,
+  twitterCredential,
+  twitterCreateTweetNode,
+  TwitterCreateTweetInputSchema,
+  TwitterCreateTweetOutputSchema,
+  twitterDeleteTweetNode,
+  TwitterDeleteTweetInputSchema,
+  TwitterDeleteTweetOutputSchema,
+  twitterLikeTweetNode,
+  TwitterLikeTweetInputSchema,
+  TwitterLikeTweetOutputSchema,
+  twitterRetweetNode,
+  TwitterRetweetInputSchema,
+  TwitterRetweetOutputSchema,
+  twitterSearchTweetsNode,
+  TwitterSearchTweetsInputSchema,
+  TwitterSearchTweetsOutputSchema,
+  twitterSendDMNode,
+  TwitterSendDMInputSchema,
+  TwitterSendDMOutputSchema,
+  twitterGetUserByUsernameNode,
+  TwitterGetUserByUsernameInputSchema,
+  TwitterGetUserByUsernameOutputSchema,
   linkedinMonitorNode,
   LinkedInMonitorInputSchema,
   LinkedInMonitorOutputSchema,
@@ -96,7 +123,58 @@ export {
   searchContactsNode,
   SearchContactsInputSchema,
   SearchContactsOutputSchema,
-} from './integrations/index.js';
+  // Discord
+  discordSendMessageNode,
+  DiscordSendMessageInputSchema,
+  DiscordSendMessageOutputSchema,
+  discordSendWebhookNode,
+  DiscordSendWebhookInputSchema,
+  DiscordSendWebhookOutputSchema,
+  discordCreateThreadNode,
+  DiscordCreateThreadInputSchema,
+  DiscordCreateThreadOutputSchema,
+  DiscordEmbedSchema,
+  discordBotCredential,
+  discordWebhookCredential,
+  // Firecrawl
+  firecrawlScrapeNode,
+  FirecrawlScrapeInputSchema,
+  FirecrawlScrapeOutputSchema,
+  firecrawlCrawlNode,
+  FirecrawlCrawlInputSchema,
+  FirecrawlCrawlOutputSchema,
+  firecrawlExtractNode,
+  FirecrawlExtractInputSchema,
+  FirecrawlExtractOutputSchema,
+  // Dev.to
+  devtoCreateArticleNode,
+  DevtoArticleSchema,
+  DevtoCreateArticleInputSchema,
+  DevtoCreateArticleOutputSchema,
+  devtoUpdateArticleNode,
+  DevtoUpdateArticleInputSchema,
+  DevtoUpdateArticleOutputSchema,
+  devtoGetArticlesNode,
+  DevtoGetArticlesInputSchema,
+  DevtoGetArticlesOutputSchema,
+  devtoCredential,
+  // WordPress
+  wordpressCreatePostNode,
+  WordPressCreatePostInputSchema,
+  WordPressCreatePostOutputSchema,
+  wordpressUpdatePostNode,
+  WordPressUpdatePostInputSchema,
+  WordPressUpdatePostOutputSchema,
+  wordpressGetPostsNode,
+  WordPressGetPostsInputSchema,
+  WordPressGetPostsOutputSchema,
+  wordpressUploadMediaNode,
+  WordPressUploadMediaInputSchema,
+  WordPressUploadMediaOutputSchema,
+  WordPressPostSchema,
+  WordPressMediaSchema,
+  WordPressCredential,
+} from './integrations/index.js'
 
 export type {
   RedditMonitorInput,
@@ -105,6 +183,20 @@ export type {
   TwitterMonitorInput,
   TwitterMonitorOutput,
   TwitterPost,
+  TwitterCreateTweetInput,
+  TwitterCreateTweetOutput,
+  TwitterDeleteTweetInput,
+  TwitterDeleteTweetOutput,
+  TwitterLikeTweetInput,
+  TwitterLikeTweetOutput,
+  TwitterRetweetInput,
+  TwitterRetweetOutput,
+  TwitterSearchTweetsInput,
+  TwitterSearchTweetsOutput,
+  TwitterSendDMInput,
+  TwitterSendDMOutput,
+  TwitterGetUserByUsernameInput,
+  TwitterGetUserByUsernameOutput,
   LinkedInMonitorInput,
   LinkedInMonitorOutput,
   LinkedInPost,
@@ -117,7 +209,37 @@ export type {
   SeoIssue,
   SearchContactsInput,
   SearchContactsOutput,
-} from './integrations/index.js';
+  DiscordSendMessageInput,
+  DiscordSendMessageOutput,
+  DiscordSendWebhookInput,
+  DiscordSendWebhookOutput,
+  DiscordCreateThreadInput,
+  DiscordCreateThreadOutput,
+  DiscordEmbed,
+  FirecrawlScrapeInput,
+  FirecrawlScrapeOutput,
+  FirecrawlCrawlInput,
+  FirecrawlCrawlOutput,
+  FirecrawlExtractInput,
+  FirecrawlExtractOutput,
+  DevtoArticle,
+  DevtoCreateArticleInput,
+  DevtoCreateArticleOutput,
+  DevtoUpdateArticleInput,
+  DevtoUpdateArticleOutput,
+  DevtoGetArticlesInput,
+  DevtoGetArticlesOutput,
+  WordPressPost,
+  WordPressCreatePostInput,
+  WordPressCreatePostOutput,
+  WordPressUpdatePostInput,
+  WordPressUpdatePostOutput,
+  WordPressGetPostsInput,
+  WordPressGetPostsOutput,
+  WordPressMedia,
+  WordPressUploadMediaInput,
+  WordPressUploadMediaOutput,
+} from './integrations/index.js'
 
 // AI nodes
 export {
@@ -132,7 +254,7 @@ export {
   socialAiAnalyzeNode,
   SocialAiAnalyzeInputSchema,
   SocialAiAnalyzeOutputSchema,
-} from './ai/index.js';
+} from './ai/index.js'
 
 export type {
   SocialKeywordGeneratorInput,
@@ -145,28 +267,49 @@ export type {
   SocialAiAnalyzeOutput,
   SocialPost,
   AnalyzedPost,
-} from './ai/index.js';
+} from './ai/index.js'
 
 // All nodes as a collection
-import { conditionalNode } from './logic/index.js';
-import { endNode } from './logic/index.js';
-import { delayNode } from './logic/index.js';
-import { mapNode, filterNode, sortNode } from './transform/index.js';
-import { httpRequestNode, breadNode } from './examples/index.js';
+import { conditionalNode } from './logic/index.js'
+import { endNode } from './logic/index.js'
+import { delayNode } from './logic/index.js'
+import { loopNode } from './logic/index.js'
+import { mapNode, filterNode, sortNode } from './transform/index.js'
+import { httpRequestNode, breadNode } from './examples/index.js'
 import {
   redditMonitorNode,
   twitterMonitorNode,
+  twitterCreateTweetNode,
+  twitterDeleteTweetNode,
+  twitterLikeTweetNode,
+  twitterRetweetNode,
+  twitterSearchTweetsNode,
+  twitterSendDMNode,
+  twitterGetUserByUsernameNode,
   linkedinMonitorNode,
   soraVideoNode,
   seoKeywordResearchNode,
   seoAuditNode,
   searchContactsNode,
-} from './integrations/index.js';
+  discordSendMessageNode,
+  discordSendWebhookNode,
+  discordCreateThreadNode,
+  firecrawlScrapeNode,
+  firecrawlCrawlNode,
+  firecrawlExtractNode,
+  devtoCreateArticleNode,
+  devtoUpdateArticleNode,
+  devtoGetArticlesNode,
+  wordpressCreatePostNode,
+  wordpressUpdatePostNode,
+  wordpressGetPostsNode,
+  wordpressUploadMediaNode,
+} from './integrations/index.js'
 import {
   socialKeywordGeneratorNode,
   draftEmailsNode,
   socialAiAnalyzeNode,
-} from './ai/index.js';
+} from './ai/index.js'
 
 /**
  * All built-in nodes as an array for easy registration
@@ -176,6 +319,7 @@ export const builtInNodes = [
   conditionalNode,
   endNode,
   delayNode,
+  loopNode,
   // Transform
   mapNode,
   filterNode,
@@ -186,13 +330,33 @@ export const builtInNodes = [
   // Integrations
   redditMonitorNode,
   twitterMonitorNode,
+  twitterCreateTweetNode,
+  twitterDeleteTweetNode,
+  twitterLikeTweetNode,
+  twitterRetweetNode,
+  twitterSearchTweetsNode,
+  twitterSendDMNode,
+  twitterGetUserByUsernameNode,
   linkedinMonitorNode,
   soraVideoNode,
   seoKeywordResearchNode,
   seoAuditNode,
   searchContactsNode,
+  discordSendMessageNode,
+  discordSendWebhookNode,
+  discordCreateThreadNode,
+  firecrawlScrapeNode,
+  firecrawlCrawlNode,
+  firecrawlExtractNode,
+  devtoCreateArticleNode,
+  devtoUpdateArticleNode,
+  devtoGetArticlesNode,
+  wordpressCreatePostNode,
+  wordpressUpdatePostNode,
+  wordpressGetPostsNode,
+  wordpressUploadMediaNode,
   // AI
   socialKeywordGeneratorNode,
   draftEmailsNode,
   socialAiAnalyzeNode,
-];
+]

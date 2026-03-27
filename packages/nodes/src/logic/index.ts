@@ -19,3 +19,15 @@ export { EndInputSchema, EndOutputSchema } from './end.js';
 export { delayNode } from './delay.js';
 export type { DelayInput, DelayOutput } from './delay.js';
 export { DelayInputSchema, DelayOutputSchema } from './delay.js';
+
+export { loopNode } from './loop.js';
+export type { LoopInput, LoopOutput } from './loop.js';
+export { LoopInputSchema, LoopOutputSchema } from './loop.js';
+
+export { retryNode } from './retry.js';
+export type { RetryInput, RetryOutput } from './retry.js';
+export { RetryInputSchema, RetryOutputSchema } from './retry.js';
+
+export { rateLimiterNode } from './rateLimiter.js';
+export type { RateLimiterInput, RateLimiterOutput } from './rateLimiter.js';
+export { RateLimiterInputSchema, RateLimiterOutputSchema } from './rateLimiter.js';

@@ -12,13 +12,49 @@ export {
   type TwitterMonitorInput,
   type TwitterMonitorOutput,
   type TwitterPost,
+  twitterCredential,
+  twitterCreateTweetNode,
+  TwitterCreateTweetInputSchema,
+  TwitterCreateTweetOutputSchema,
+  type TwitterCreateTweetInput,
+  type TwitterCreateTweetOutput,
+  twitterDeleteTweetNode,
+  TwitterDeleteTweetInputSchema,
+  TwitterDeleteTweetOutputSchema,
+  type TwitterDeleteTweetInput,
+  type TwitterDeleteTweetOutput,
+  twitterLikeTweetNode,
+  TwitterLikeTweetInputSchema,
+  TwitterLikeTweetOutputSchema,
+  type TwitterLikeTweetInput,
+  type TwitterLikeTweetOutput,
+  twitterRetweetNode,
+  TwitterRetweetInputSchema,
+  TwitterRetweetOutputSchema,
+  type TwitterRetweetInput,
+  type TwitterRetweetOutput,
+  twitterSearchTweetsNode,
+  TwitterSearchTweetsInputSchema,
+  TwitterSearchTweetsOutputSchema,
+  type TwitterSearchTweetsInput,
+  type TwitterSearchTweetsOutput,
+  twitterSendDMNode,
+  TwitterSendDMInputSchema,
+  TwitterSendDMOutputSchema,
+  type TwitterSendDMInput,
+  type TwitterSendDMOutput,
+  twitterGetUserByUsernameNode,
+  TwitterGetUserByUsernameInputSchema,
+  TwitterGetUserByUsernameOutputSchema,
+  type TwitterGetUserByUsernameInput,
+  type TwitterGetUserByUsernameOutput,
   linkedinMonitorNode,
   LinkedInMonitorInputSchema,
   LinkedInMonitorOutputSchema,
   type LinkedInMonitorInput,
   type LinkedInMonitorOutput,
   type LinkedInPost,
-} from './social/index.js';
+} from './social/index.js'
 
 // OpenAI integrations
 export {
@@ -27,7 +63,7 @@ export {
   SoraVideoOutputSchema,
   type SoraVideoInput,
   type SoraVideoOutput,
-} from './openai/index.js';
+} from './openai/index.js'
 
 // DataForSEO integrations
 export {
@@ -42,7 +78,7 @@ export {
   type SeoAuditInput,
   type SeoAuditOutput,
   type SeoIssue,
-} from './dataforseo/index.js';
+} from './dataforseo/index.js'
 
 // Apollo integrations
 export {
@@ -51,4 +87,99 @@ export {
   SearchContactsOutputSchema,
   type SearchContactsInput,
   type SearchContactsOutput,
-} from './apollo/index.js';
+} from './apollo/index.js'
+
+// Discord integrations
+export {
+  discordSendMessageNode,
+  DiscordSendMessageInputSchema,
+  DiscordSendMessageOutputSchema,
+  type DiscordSendMessageInput,
+  type DiscordSendMessageOutput,
+  discordSendWebhookNode,
+  DiscordSendWebhookInputSchema,
+  DiscordSendWebhookOutputSchema,
+  type DiscordSendWebhookInput,
+  type DiscordSendWebhookOutput,
+  discordCreateThreadNode,
+  DiscordCreateThreadInputSchema,
+  DiscordCreateThreadOutputSchema,
+  type DiscordCreateThreadInput,
+  type DiscordCreateThreadOutput,
+  DiscordEmbedSchema,
+  type DiscordEmbed,
+  discordBotCredential,
+  discordWebhookCredential,
+} from './discord/index.js'
+
+// Firecrawl integrations
+export {
+  firecrawlScrapeNode,
+  FirecrawlScrapeInputSchema,
+  FirecrawlScrapeOutputSchema,
+  type FirecrawlScrapeInput,
+  type FirecrawlScrapeOutput,
+  firecrawlCrawlNode,
+  FirecrawlCrawlInputSchema,
+  FirecrawlCrawlOutputSchema,
+  type FirecrawlCrawlInput,
+  type FirecrawlCrawlOutput,
+  firecrawlExtractNode,
+  FirecrawlExtractInputSchema,
+  FirecrawlExtractOutputSchema,
+  type FirecrawlExtractInput,
+  type FirecrawlExtractOutput,
+} from './firecrawl/index.js'
+
+// Dev.to integrations
+export {
+  devtoCreateArticleNode,
+  devtoUpdateArticleNode,
+  devtoGetArticlesNode,
+  DevtoArticleSchema,
+  DevtoCreateArticleInputSchema,
+  DevtoCreateArticleOutputSchema,
+  DevtoUpdateArticleInputSchema,
+  DevtoUpdateArticleOutputSchema,
+  DevtoGetArticlesInputSchema,
+  DevtoGetArticlesOutputSchema,
+  normalizeDevtoArticle,
+  devtoCredential,
+  type DevtoArticle,
+  type DevtoCreateArticleInput,
+  type DevtoCreateArticleOutput,
+  type DevtoUpdateArticleInput,
+  type DevtoUpdateArticleOutput,
+  type DevtoGetArticlesInput,
+  type DevtoGetArticlesOutput,
+} from './devto/index.js'
+
+// WordPress integrations
+export {
+  wordpressCreatePostNode,
+  wordpressUpdatePostNode,
+  wordpressGetPostsNode,
+  wordpressUploadMediaNode,
+  WordPressCredential,
+  WordPressPostSchema,
+  WordPressCreatePostInputSchema,
+  WordPressCreatePostOutputSchema,
+  WordPressUpdatePostInputSchema,
+  WordPressUpdatePostOutputSchema,
+  WordPressGetPostsInputSchema,
+  WordPressGetPostsOutputSchema,
+  WordPressMediaSchema,
+  WordPressUploadMediaInputSchema,
+  WordPressUploadMediaOutputSchema,
+  normalizeWordPressPost,
+  type WordPressPost,
+  type WordPressCreatePostInput,
+  type WordPressCreatePostOutput,
+  type WordPressUpdatePostInput,
+  type WordPressUpdatePostOutput,
+  type WordPressGetPostsInput,
+  type WordPressGetPostsOutput,
+  type WordPressMedia,
+  type WordPressUploadMediaInput,
+  type WordPressUploadMediaOutput,
+} from './wordpress/index.js'
