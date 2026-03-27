@@ -17,6 +17,9 @@ export {
   WebhookTriggerOutputSchema,
   RateLimiterInputSchema,
   RateLimiterOutputSchema,
+  retryNode,
+  RetryInputSchema,
+  RetryOutputSchema,
 } from './logic/index.js'
 
 export type {
@@ -32,6 +35,8 @@ export type {
   WebhookTriggerOutput,
   RateLimiterInput,
   RateLimiterOutput,
+  RetryInput,
+  RetryOutput,
 } from './logic/index.js'
 
 // Transform nodes
@@ -280,6 +285,7 @@ import { endNode } from './logic/index.js'
 import { delayNode } from './logic/index.js'
 import { webhookTriggerNode } from './logic/index.js'
 import { rateLimiterNode } from './logic/index.js'
+import { retryNode } from './logic/index.js'
 import { mapNode, filterNode, sortNode } from './transform/index.js'
 import { httpRequestNode, breadNode } from './examples/index.js'
 import {
@@ -327,6 +333,7 @@ export const builtInNodes = [
   delayNode,
   webhookTriggerNode,
   rateLimiterNode,
+  retryNode,
   // Transform
   mapNode,
   filterNode,
