@@ -6,6 +6,7 @@
 import { NodeRegistry, ExecutionContext, defineNode, executeNode, executeWorkflow, MemoryCacheStore } from './packages/core/src/index';
 import type { Workflow } from './packages/core/src/index';
 import { conditionalNode, endNode, delayNode, mapNode, filterNode, sortNode, httpRequestNode, breadNode, builtInNodes } from './packages/nodes/src/index';
+import { googleSheetsAppendNode } from './packages/nodes/src/integrations/google-sheets/googleSheetsAppend.js';
 import { z } from 'zod';
 
 async function test() {
@@ -112,7 +113,7 @@ async function test() {
   const greetResult = await greetExecutor({ name: 'World' }, nodeCtx);
   console.log(`✓ Custom node: ${greetResult.output?.message}`);
 
-  // Test 8: Execute bread node
+  // Test 9: Execute bread node
   const breadExecutor = registry.getExecutor('bread')!;
   const breadResult = await breadExecutor({}, nodeCtx);
   console.log(`✓ Bread node: ${breadResult.output?.message}`);

@@ -3,7 +3,8 @@ export {
   conditionalNode,
   endNode,
   delayNode,
-  loopNode,
+  webhookTriggerNode,
+  rateLimiterNode,
   ConditionalInputSchema,
   ConditionalOutputSchema,
   ConditionSchema,
@@ -12,8 +13,13 @@ export {
   EndOutputSchema,
   DelayInputSchema,
   DelayOutputSchema,
-  LoopInputSchema,
-  LoopOutputSchema,
+  WebhookTriggerInputSchema,
+  WebhookTriggerOutputSchema,
+  RateLimiterInputSchema,
+  RateLimiterOutputSchema,
+  retryNode,
+  RetryInputSchema,
+  RetryOutputSchema,
 } from './logic/index.js'
 
 export type {
@@ -25,8 +31,12 @@ export type {
   EndOutput,
   DelayInput,
   DelayOutput,
-  LoopInput,
-  LoopOutput,
+  WebhookTriggerInput,
+  WebhookTriggerOutput,
+  RateLimiterInput,
+  RateLimiterOutput,
+  RetryInput,
+  RetryOutput,
 } from './logic/index.js'
 
 // Transform nodes
@@ -119,6 +129,15 @@ export {
   seoAuditNode,
   SeoAuditInputSchema,
   SeoAuditOutputSchema,
+  dataforseoGetBacklinksNode,
+  DataforseoGetBacklinksInputSchema,
+  DataforseoGetBacklinksOutputSchema,
+  dataforseoPeopleAlsoAskNode,
+  DataforseoPeopleAlsoAskInputSchema,
+  DataforseoPeopleAlsoAskOutputSchema,
+  dataforseoSerpNode,
+  DataforseoSerpInputSchema,
+  DataforseoSerpOutputSchema,
   // Apollo
   searchContactsNode,
   SearchContactsInputSchema,
@@ -174,6 +193,19 @@ export {
   WordPressPostSchema,
   WordPressMediaSchema,
   WordPressCredential,
+  // Google Sheets
+  googleSheetsAppendNode,
+  googleSheetsClearNode,
+  googleSheetsReadNode,
+  googleSheetsUpdateNode,
+  appendInputSchema,
+  appendOutputSchema,
+  clearInputSchema,
+  clearOutputSchema,
+  readInputSchema,
+  readOutputSchema,
+  updateInputSchema,
+  updateOutputSchema,
 } from './integrations/index.js'
 
 export type {
@@ -207,6 +239,12 @@ export type {
   SeoAuditInput,
   SeoAuditOutput,
   SeoIssue,
+  DataforseoGetBacklinksInput,
+  DataforseoGetBacklinksOutput,
+  DataforseoPeopleAlsoAskInput,
+  DataforseoPeopleAlsoAskOutput,
+  DataforseoSerpInput,
+  DataforseoSerpOutput,
   SearchContactsInput,
   SearchContactsOutput,
   DiscordSendMessageInput,
@@ -239,6 +277,15 @@ export type {
   WordPressMedia,
   WordPressUploadMediaInput,
   WordPressUploadMediaOutput,
+  // Google Sheets
+  AppendInput,
+  AppendOutput,
+  ClearInput,
+  ClearOutput,
+  ReadInput,
+  ReadOutput,
+  UpdateInput,
+  UpdateOutput,
 } from './integrations/index.js'
 
 // AI nodes
@@ -273,7 +320,9 @@ export type {
 import { conditionalNode } from './logic/index.js'
 import { endNode } from './logic/index.js'
 import { delayNode } from './logic/index.js'
-import { loopNode } from './logic/index.js'
+import { webhookTriggerNode } from './logic/index.js'
+import { rateLimiterNode } from './logic/index.js'
+import { retryNode } from './logic/index.js'
 import { mapNode, filterNode, sortNode } from './transform/index.js'
 import { httpRequestNode, breadNode } from './examples/index.js'
 import {
@@ -290,6 +339,9 @@ import {
   soraVideoNode,
   seoKeywordResearchNode,
   seoAuditNode,
+  dataforseoGetBacklinksNode,
+  dataforseoPeopleAlsoAskNode,
+  dataforseoSerpNode,
   searchContactsNode,
   discordSendMessageNode,
   discordSendWebhookNode,
@@ -304,6 +356,10 @@ import {
   wordpressUpdatePostNode,
   wordpressGetPostsNode,
   wordpressUploadMediaNode,
+  googleSheetsAppendNode,
+  googleSheetsClearNode,
+  googleSheetsReadNode,
+  googleSheetsUpdateNode,
 } from './integrations/index.js'
 import {
   socialKeywordGeneratorNode,
@@ -319,7 +375,9 @@ export const builtInNodes = [
   conditionalNode,
   endNode,
   delayNode,
-  loopNode,
+  webhookTriggerNode,
+  rateLimiterNode,
+  retryNode,
   // Transform
   mapNode,
   filterNode,
@@ -341,6 +399,9 @@ export const builtInNodes = [
   soraVideoNode,
   seoKeywordResearchNode,
   seoAuditNode,
+  dataforseoGetBacklinksNode,
+  dataforseoPeopleAlsoAskNode,
+  dataforseoSerpNode,
   searchContactsNode,
   discordSendMessageNode,
   discordSendWebhookNode,
@@ -355,6 +416,11 @@ export const builtInNodes = [
   wordpressUpdatePostNode,
   wordpressGetPostsNode,
   wordpressUploadMediaNode,
+  // Google Sheets
+  googleSheetsAppendNode,
+  googleSheetsClearNode,
+  googleSheetsReadNode,
+  googleSheetsUpdateNode,
   // AI
   socialKeywordGeneratorNode,
   draftEmailsNode,

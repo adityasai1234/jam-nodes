@@ -72,6 +72,18 @@ export interface NodeCredentials {
     username: string
     applicationPassword: string
   }
+  /** Apify API credentials */
+  apify?: {
+    apiToken: string
+  }
+  /** Google Sheets OAuth2 credentials */
+  googleSheets?: {
+    clientId: string
+    clientSecret: string
+    accessToken: string
+    refreshToken: string
+    expiresAt: number
+  }
 }
 
 /**

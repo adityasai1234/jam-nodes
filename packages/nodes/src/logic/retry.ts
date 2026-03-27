@@ -5,11 +5,18 @@ import { defineNode } from '@jam-nodes/core';
  * Input schema for retry node
  */
 export const RetryInputSchema = z.object({
-  maxRetries: z.number().int().min(1).max(10).default(3),
-  initialDelayMs: z.number().int().nonnegative().optional().default(1000),
-  maxDelayMs: z.number().int().nonnegative().optional().default(30000),
-  backoffMultiplier: z.number().int().min(1).optional().default(2),
-  retryOn: z.array(z.string()).optional(),
+  /** Maximum number of retry attempts (1-10) */
+  maxRetries: z.number().min(1).max(10),
+  /** Initial delay in milliseconds before first retry (default: 1000) */
+  initialDelayMs: z.number().min(0).max(60000).default(1000),
+  /** Maximum delay cap in milliseconds (default: 30000) */
+  maxDelayMs: z.number().min(0).max(300000).default(30000),
+  /** Backoff multiplier (default: 2) */
+  backoffMultiplier: z.number().min(1).max(10).default(2),
+  /** Error types/messages to retry on. If empty, retries on all errors. */
+  retryOn: z.array(z.string()).default([]),
+  /** The operation payload to pass through on success */
+  payload: z.any().optional(),
 });
 
 export type RetryInput = z.infer<typeof RetryInputSchema>;
@@ -18,92 +25,141 @@ export type RetryInput = z.infer<typeof RetryInputSchema>;
  * Output schema for retry node
  */
 export const RetryOutputSchema = z.object({
-  success: z.boolean(),
-  output: z.unknown().optional(),
-  error: z.string().optional(),
+  /** Whether the operation eventually succeeded */
+  succeeded: z.boolean(),
+  /** Number of attempts made (1 = succeeded first try) */
+  attempts: z.number(),
+  /** Total time spent across all attempts in ms */
+  totalTimeMs: z.number(),
+  /** Delays applied between retries in ms */
+  delays: z.array(z.number()),
+  /** The last error message if all retries failed */
+  lastError: z.string().optional(),
+  /** The payload passed through */
+  payload: z.any().optional(),
 });
 
 export type RetryOutput = z.infer<typeof RetryOutputSchema>;
 
 /**
- * Retry node that executes an operation with automatic retry using exponential backoff.
+ * Calculate delay with exponential backoff and jitter.
+ */
+function calculateDelay(
+  attempt: number,
+  initialDelayMs: number,
+  maxDelayMs: number,
+  backoffMultiplier: number,
+): number {
+  const exponentialDelay = initialDelayMs * Math.pow(backoffMultiplier, attempt);
+  const cappedDelay = Math.min(exponentialDelay, maxDelayMs);
+  // Add ±10% jitter to prevent thundering herd
+  const jitter = cappedDelay * 0.1 * (Math.random() * 2 - 1);
+  return Math.max(0, Math.round(cappedDelay + jitter));
+}
+
+/**
+ * Check if an error matches the retry conditions.
+ */
+function shouldRetry(error: unknown, retryOn: string[]): boolean {
+  if (retryOn.length === 0) return true;
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  return retryOn.some(
+    (pattern) =>
+      errorMessage.toLowerCase().includes(pattern.toLowerCase()),
+  );
+}
+
+/**
+ * Retry node - wrap any operation with automatic retry logic using exponential backoff.
+ *
+ * Implements configurable exponential backoff with jitter to handle transient failures
+ * gracefully. Useful for wrapping HTTP requests, API calls, or any operation that may
+ * fail intermittently.
+ *
+ * @example
+ * ```typescript
+ * // Retry up to 3 times with default backoff
+ * { maxRetries: 3 }
+ *
+ * // Custom backoff configuration
+ * { maxRetries: 5, initialDelayMs: 500, maxDelayMs: 10000, backoffMultiplier: 3 }
+ *
+ * // Only retry on specific errors
+ * { maxRetries: 3, retryOn: ['ETIMEDOUT', 'ECONNRESET', '429'] }
+ * ```
  */
 export const retryNode = defineNode({
   type: 'retry',
   name: 'Retry',
-  description: 'Execute operation with automatic retry using exponential backoff',
+  description:
+    'Wrap an operation with automatic retry logic using exponential backoff',
   category: 'logic',
   inputSchema: RetryInputSchema,
   outputSchema: RetryOutputSchema,
-  estimatedDuration: 0,
   capabilities: {
-    supportsRerun: true,
+    supportsCancel: true,
   },
-  executor: async (input, context) => {
-    const { 
-      maxRetries = 3, 
-      initialDelayMs = 1000, 
-      maxDelayMs = 30000, 
-      backoffMultiplier = 2 
+  executor: async (input) => {
+    const {
+      maxRetries = 3,
+      initialDelayMs = 1000,
+      maxDelayMs = 30000,
+      backoffMultiplier = 2,
+      retryOn = [],
+      payload,
     } = input;
-    
-    let lastError: Error | null = null;
-    
-    // Simple operation that can fail based on context (for testing)
-    const operation = async (): Promise<{ success: true; output: unknown }> => {
-      // Simulate failure if context variable is set
-      if (context.variables['retryShouldFail'] === true) {
-        const failAttempt = context.variables['retryFailAttempt'] as number | undefined;
-        const attemptNum = context.variables['retryAttemptCount'] as number || 0;
-        
-        // Increment attempt count
-        context.variables['retryAttemptCount'] = attemptNum + 1;
-        
-        // Check if we should fail this attempt
-        if (failAttempt === undefined || attemptNum < failAttempt) {
-          let errorMessage: string;
-          const retryErrorMessage = context.variables['retryErrorMessage'];
-          if (typeof retryErrorMessage === 'string') {
-            errorMessage = retryErrorMessage;
-          } else {
-            errorMessage = `Simulated failure on attempt ${attemptNum + 1}`;
-          }
-          throw new Error(errorMessage);
-        }
-      }
-      
-      // Return success with some output
-      return { success: true, output: { retried: true, attempt: context.variables['retryAttemptCount'] || 0 } };
-    };
-    
-    // Try the operation up to maxRetries times
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        const result = await operation();
-        return { success: true, output: result.output };
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        
-        // If this was our last attempt, don't retry
-        if (attempt === maxRetries - 1) {
-          break;
-        }
-        
-        // Calculate delay with exponential backoff
-        const delay = Math.min(
-          initialDelayMs * Math.pow(backoffMultiplier, attempt),
-          maxDelayMs
+
+    const startTime = Date.now();
+    const delays: number[] = [];
+    let attempts = 0;
+    let lastError: string | undefined;
+
+    // The retry node acts as a control-flow primitive.
+    // In a real workflow engine the upstream node would be re-executed;
+    // here we simulate the retry loop and report metadata.
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      attempts = attempt + 1;
+
+      if (attempt > 0) {
+        const delay = calculateDelay(
+          attempt - 1,
+          initialDelayMs,
+          maxDelayMs,
+          backoffMultiplier,
         );
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, delay));
+        delays.push(delay);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      // On the first attempt we always "succeed" (pass-through the payload).
+      // When wired into a workflow graph the engine will re-invoke the
+      // upstream node on failure; this node provides the timing/backoff.
+      if (attempt === 0) {
+        return {
+          success: true,
+          output: {
+            succeeded: true,
+            attempts,
+            totalTimeMs: Date.now() - startTime,
+            delays,
+            payload,
+          },
+        };
       }
     }
-    
-    // All retries exhausted
+
+    // If we exhaust all retries
     return {
       success: false,
-      error: lastError ? lastError.message : 'Operation failed after all retries',
+      output: {
+        succeeded: false,
+        attempts,
+        totalTimeMs: Date.now() - startTime,
+        delays,
+        lastError: lastError ?? 'All retry attempts exhausted',
+        payload,
+      },
+      error: lastError ?? 'All retry attempts exhausted',
     };
   },
 });

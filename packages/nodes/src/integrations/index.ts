@@ -78,6 +78,21 @@ export {
   type SeoAuditInput,
   type SeoAuditOutput,
   type SeoIssue,
+  dataforseoGetBacklinksNode,
+  DataforseoGetBacklinksInputSchema,
+  DataforseoGetBacklinksOutputSchema,
+  type DataforseoGetBacklinksInput,
+  type DataforseoGetBacklinksOutput,
+  dataforseoPeopleAlsoAskNode,
+  DataforseoPeopleAlsoAskInputSchema,
+  DataforseoPeopleAlsoAskOutputSchema,
+  type DataforseoPeopleAlsoAskInput,
+  type DataforseoPeopleAlsoAskOutput,
+  dataforseoSerpNode,
+  DataforseoSerpInputSchema,
+  DataforseoSerpOutputSchema,
+  type DataforseoSerpInput,
+  type DataforseoSerpOutput,
 } from './dataforseo/index.js'
 
 // Apollo integrations
@@ -183,3 +198,47 @@ export {
   type WordPressUploadMediaInput,
   type WordPressUploadMediaOutput,
 } from './wordpress/index.js'
+
+// Apify integrations
+export {
+  apifyRunActorNode,
+  ApifyRunActorInputSchema,
+  ApifyRunActorOutputSchema,
+  type ApifyRunActorInput,
+  type ApifyRunActorOutput,
+  apifyGetDatasetNode,
+  ApifyGetDatasetInputSchema,
+  ApifyGetDatasetOutputSchema,
+  type ApifyGetDatasetInput,
+  type ApifyGetDatasetOutput,
+  apifyGetRunStatusNode,
+  ApifyGetRunStatusInputSchema,
+  ApifyGetRunStatusOutputSchema,
+  type ApifyGetRunStatusInput,
+  type ApifyGetRunStatusOutput,
+  apifyCredential,
+} from './apify/index.js'
+
+// Google Sheets integrations
+export {
+  googleSheetsAppendNode,
+  googleSheetsClearNode,
+  googleSheetsReadNode,
+  googleSheetsUpdateNode,
+  appendInputSchema,
+  appendOutputSchema,
+  clearInputSchema,
+  clearOutputSchema,
+  readInputSchema,
+  readOutputSchema,
+  updateInputSchema,
+  updateOutputSchema,
+  type AppendInput,
+  type AppendOutput,
+  type ClearInput,
+  type ClearOutput,
+  type ReadInput,
+  type ReadOutput,
+  type UpdateInput,
+  type UpdateOutput,
+} from './google-sheets/index.js'
